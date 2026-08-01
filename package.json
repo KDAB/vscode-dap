@@ -6,7 +6,7 @@
   "publisher": "KDAB",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iamsergio/vscode-gdb-dap.git"
+    "url": "https://github.com/KDAB/vscode-gdb-dap.git"
   },
   "engines": {
     "vscode": "^1.90.0"
