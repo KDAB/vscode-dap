@@ -50,6 +50,12 @@
     "C++"
   ],
   "icon": "kdab.png",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
   "contributes": {
     "configuration": {
       "type": "object",
