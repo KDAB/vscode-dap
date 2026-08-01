@@ -12,8 +12,13 @@ import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
 
 const execFileAsync = promisify(execFile);
 
-/** The lowest gdb version whose DAP support this extension relies on. */
-export const MIN_GDB_VERSION: readonly [number, number] = [15, 1];
+/**
+ * The lowest gdb version whose DAP support this extension relies on. 16.1 is
+ * where gdb defers starting the inferior to "configurationDone"; before that,
+ * "launch" ran the program immediately, so breakpoints sent after
+ * "initialized" arrived too late and "stopOnEntry" was ignored.
+ */
+export const MIN_GDB_VERSION: readonly [number, number] = [16, 1];
 
 /**
  * Whether `filePath` is a regular file the current user can execute. The
@@ -212,7 +217,7 @@ export class GDBDapDescriptorFactory
   static async showGdbNotFoundMessage(gdbPath?: string) {
     const message = gdbPath
       ? `gdb path '${gdbPath}' is not a valid executable.`
-      : "Unable to find gdb. Install GDB 16.1 or later, or set kdap.gdbPath.";
+      : `Unable to find gdb. Install GDB ${MIN_GDB_VERSION[0]}.${MIN_GDB_VERSION[1]} or later, or set kdap.gdbPath.`;
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,
