@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 import * as assert from "assert";
+import * as os from "node:os";
 import * as vscode from "vscode";
+
+import { isExecutable } from "../../debugAdapterFactory";
 
 suite("Extension Smoke Tests", () => {
   const extensionId = "KDAB.gdb-dap";
@@ -28,5 +31,19 @@ suite("Extension Smoke Tests", () => {
       1,
       "logLevel default should be 1",
     );
+  });
+
+  test("isExecutable accepts an executable file", async () => {
+    assert.strictEqual(await isExecutable(process.execPath), true);
+  });
+
+  test("isExecutable rejects a directory", async () => {
+    // A searchable directory passes access(X_OK), so this only holds because
+    // isExecutable also requires a regular file.
+    assert.strictEqual(await isExecutable(os.tmpdir()), false);
+  });
+
+  test("isExecutable rejects a missing path", async () => {
+    assert.strictEqual(await isExecutable("/nonexistent/kdap-test/gdb"), false);
   });
 });

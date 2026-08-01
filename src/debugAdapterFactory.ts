@@ -15,8 +15,18 @@ const execFileAsync = promisify(execFile);
 /** The lowest gdb version whose DAP support this extension relies on. */
 export const MIN_GDB_VERSION: readonly [number, number] = [15, 1];
 
+/**
+ * Whether `filePath` is a regular file the current user can execute. The
+ * `isFile()` check matters because `X_OK` also succeeds on any directory with
+ * search permission, so pointing `kdap.gdbPath` at a bin directory instead of
+ * the gdb binary would otherwise only fail later, when gdb is run.
+ */
 export async function isExecutable(filePath: string): Promise<boolean> {
   try {
+    const stats = await fs.stat(filePath);
+    if (!stats.isFile()) {
+      return false;
+    }
     await fs.access(filePath, fs.constants.X_OK);
   } catch {
     return false;
