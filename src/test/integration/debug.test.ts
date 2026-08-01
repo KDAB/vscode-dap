@@ -69,9 +69,21 @@ async function disconnectAndWait(session: vscode.DebugSession): Promise<void> {
 }
 
 suite("GDB DAP debugging", () => {
-  suiteSetup(function () {
+  suiteSetup(async function () {
     this.timeout(30000);
     cp.execFileSync("gcc", ["-g", "-O0", "-o", programPath, sourcePath]);
+
+    // Otherwise starting a session on a machine without the printers pops a
+    // modal offering to download them, which nothing here would ever answer.
+    await vscode.workspace
+      .getConfiguration("kdap")
+      .update("qtPrettyPrinters", false, vscode.ConfigurationTarget.Global);
+  });
+
+  suiteTeardown(async () => {
+    await vscode.workspace
+      .getConfiguration("kdap")
+      .update("qtPrettyPrinters", undefined, vscode.ConfigurationTarget.Global);
   });
 
   teardown(() => {

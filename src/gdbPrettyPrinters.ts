@@ -62,11 +62,12 @@ export function getPrettyPrintersDir(context: vscode.ExtensionContext): string {
 /**
  * Downloads the KDevelop Qt gdb pretty-printer scripts into this extension's
  * global storage directory. Independent of ~/.config/gdb - nothing in the
- * user's gdbinit is read or written.
+ * user's gdbinit is read or written. Returns whether the download succeeded;
+ * failures are reported to the user here.
  */
 export async function downloadQtPrettyPrinters(
   context: vscode.ExtensionContext,
-): Promise<void> {
+): Promise<boolean> {
   const dir = getPrettyPrintersDir(context);
   const qtCreatorDebuggerDir = path.join(dir, "qtcreator_debugger");
 
@@ -115,24 +116,45 @@ export async function downloadQtPrettyPrinters(
     void vscode.window.showInformationMessage(
       "Qt gdb pretty printers downloaded to " + dir,
     );
+    return true;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     void vscode.window.showErrorMessage(
       "Failed to download Qt gdb pretty printers: " + message,
     );
+    return false;
   }
 }
 
 /**
- * Returns the gdb args needed to load the Qt pretty-printers, or an empty
- * array if they haven't been downloaded yet (see downloadQtPrettyPrinters).
+ * Returns the gdb args needed to load the Qt pretty-printers. If they haven't
+ * been downloaded yet, offers to download them first; declining, or a failed
+ * download, yields an empty array so the session starts without them.
  */
 export async function getQtPrettyPrintersArgs(
   context: vscode.ExtensionContext,
 ): Promise<string[]> {
   const dir = getPrettyPrintersDir(context);
   if (!(await pathExists(path.join(dir, "qt.py")))) {
-    return [];
+    const downloadAction = "Download";
+    // Modal, because the debug session is blocked waiting for this answer and
+    // a regular notification is easy to miss.
+    const choice = await vscode.window.showInformationMessage(
+      "The Qt gdb pretty printers haven't been downloaded yet. Download them now?",
+      {
+        modal: true,
+        detail:
+          "Declining starts the session without Qt pretty printing. Set kdap.qtPrettyPrinters to false to stop being asked.",
+      },
+      downloadAction,
+    );
+    if (choice !== downloadAction) {
+      return [];
+    }
+
+    if (!(await downloadQtPrettyPrinters(context))) {
+      return [];
+    }
   }
 
   return [

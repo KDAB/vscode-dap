@@ -97,7 +97,7 @@
           "scope": "resource",
           "type": "boolean",
           "default": true,
-          "description": "Automatically load Qt pretty-printers for gdb. Has no effect until the 'GDB DAP: Download Qt Pretty Printers' command has been run once."
+          "description": "Automatically load Qt pretty-printers for gdb. If they haven't been downloaded yet, starting a debug session offers to download them."
         }
       }
     },
