@@ -111,12 +111,13 @@ export async function downloadQtPrettyPrinters(
       },
     );
 
-    vscode.window.showInformationMessage(
+    // Fire and forget: awaiting would block until the user dismisses it.
+    void vscode.window.showInformationMessage(
       "Qt gdb pretty printers downloaded to " + dir,
     );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    vscode.window.showErrorMessage(
+    void vscode.window.showErrorMessage(
       "Failed to download Qt gdb pretty printers: " + message,
     );
   }

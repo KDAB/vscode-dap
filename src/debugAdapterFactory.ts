@@ -123,7 +123,7 @@ async function getGdbPath(
   session: vscode.DebugSession,
 ): Promise<string | undefined> {
   // Explicit path in the launch configuration takes priority.
-  const launchConfigPath = session.configuration["gdbPath"];
+  const launchConfigPath: unknown = session.configuration["gdbPath"];
   if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
     // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
     return resolveGdbPath(expandTilde(launchConfigPath));

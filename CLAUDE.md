@@ -54,9 +54,14 @@ npm test                     # Requires GDB 15.1+ and gcc on PATH
 
 ## Development Workflow
 
-- **ESLint** (strict, zero warnings allowed) and **Prettier** run automatically via pre-commit
-  hooks (configured in `.pre-commit-config.yaml`)
-- **GitHub Actions** enforces linting on every PR and push (`.github/workflows/lints.yml`)
+- **ESLint** uses `js.configs.recommended` plus typescript-eslint's `recommendedTypeChecked`
+  (type-aware, so rules like `no-floating-promises` apply), and `npm run lint` allows zero
+  warnings. Run it before committing — pre-commit does not.
+- **Prettier** (`npm run format:check` / `format:fix`) covers `src/**/*.ts`. Run it before
+  committing too; pre-commit does not.
+- **pre-commit** (`.pre-commit-config.yaml`) only enforces conventional commit messages and
+  runs codespell.
+- **GitHub Actions** enforces ESLint and Prettier on every PR and push (`.github/workflows/lints.yml`)
 - CI (`.github/workflows/build.yml`) is Linux-only, since this extension only supports GDB on Linux.
 
 ## Conventions
