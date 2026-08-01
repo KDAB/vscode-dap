@@ -75,19 +75,31 @@ function expandConfigPath(
   return expanded;
 }
 
-async function findGdbInPath(): Promise<string | undefined> {
+async function findExecutableInPath(name: string): Promise<string | undefined> {
   const envPath = process.env["PATH"];
   if (!envPath) {
     return undefined;
   }
 
   for (const dir of envPath.split(path.delimiter)) {
-    const candidate = path.join(dir, "gdb");
+    const candidate = path.join(dir, name);
     if (await isExecutable(candidate)) {
       return candidate;
     }
   }
   return undefined;
+}
+
+/**
+ * A bare command name (e.g. "gdb-multiarch") isn't resolved via PATH by
+ * `fs.access`, so look it up ourselves. Values containing a path separator
+ * are left untouched.
+ */
+async function resolveGdbPath(value: string): Promise<string> {
+  if (value.includes(path.sep)) {
+    return value;
+  }
+  return (await findExecutableInPath(value)) ?? value;
 }
 
 async function getGdbPath(
@@ -96,7 +108,7 @@ async function getGdbPath(
   // Explicit path in the launch configuration takes priority.
   const launchConfigPath = session.configuration["gdbPath"];
   if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
-    return launchConfigPath;
+    return resolveGdbPath(launchConfigPath);
   }
 
   // Then the extension's own setting.
@@ -106,11 +118,13 @@ async function getGdbPath(
   );
   const configPath = config.get<string>("gdbPath");
   if (configPath && configPath.length !== 0) {
-    return expandConfigPath(configPath, session.workspaceFolder);
+    return resolveGdbPath(
+      expandConfigPath(configPath, session.workspaceFolder),
+    );
   }
 
   // Fall back to searching PATH.
-  return findGdbInPath();
+  return findExecutableInPath("gdb");
 }
 
 /**
