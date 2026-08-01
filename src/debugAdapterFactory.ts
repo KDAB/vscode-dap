@@ -13,7 +13,7 @@ import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
 const execFileAsync = promisify(execFile);
 
 /** The lowest gdb version whose DAP support this extension relies on. */
-export const MIN_GDB_VERSION: readonly [number, number] = [15, 2];
+export const MIN_GDB_VERSION: readonly [number, number] = [15, 1];
 
 export async function isExecutable(filePath: string): Promise<boolean> {
   try {
@@ -191,7 +191,7 @@ export class GDBDapDescriptorFactory
   static async showGdbNotFoundMessage(gdbPath?: string) {
     const message = gdbPath
       ? `gdb path '${gdbPath}' is not a valid executable.`
-      : "Unable to find gdb. Install GDB 15.2 or later, or set kdap.gdbPath.";
+      : "Unable to find gdb. Install GDB 15.1 or later, or set kdap.gdbPath.";
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,

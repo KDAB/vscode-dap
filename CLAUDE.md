@@ -26,7 +26,7 @@ npm run compile              # Compile TypeScript to JavaScript
 ### Testing & Building
 
 ```bash
-npm test                     # Requires GDB 15.2+ and gcc on PATH
+npm test                     # Requires GDB 15.1+ and gcc on PATH
 ./build_package.sh           # Package the extension as a .vsix file
 ```
 
