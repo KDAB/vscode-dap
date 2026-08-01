@@ -14,7 +14,10 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest (24.04): its gdb is 15.1, which runs the inferior during the DAP
+    # "launch" request instead of at "configurationDone", so breakpoints set before the
+    # program starts are never hit. 26.04 ships gdb 17.1.
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Use Node.js

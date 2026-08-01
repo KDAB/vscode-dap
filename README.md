@@ -5,7 +5,9 @@ built-in [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-prot
 (`gdb -i dap`). Since GDB speaks DAP natively, this extension is a thin layer: it just finds a
 suitable `gdb` binary and launches it as VS Code's debug adapter.
 
-Requires GDB 15.1 or later, on Linux.
+Requires GDB 16.1 or later, on Linux. Older GDBs run the inferior as part of the DAP `launch`
+request instead of deferring it to `configurationDone`, so breakpoints set before the program
+starts are never hit, and they ignore `stopOnEntry`.
 
 ## Usage
 

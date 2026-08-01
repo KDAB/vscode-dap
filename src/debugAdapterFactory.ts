@@ -212,7 +212,7 @@ export class GDBDapDescriptorFactory
   static async showGdbNotFoundMessage(gdbPath?: string) {
     const message = gdbPath
       ? `gdb path '${gdbPath}' is not a valid executable.`
-      : "Unable to find gdb. Install GDB 15.1 or later, or set kdap.gdbPath.";
+      : "Unable to find gdb. Install GDB 16.1 or later, or set kdap.gdbPath.";
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,
