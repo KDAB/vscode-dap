@@ -75,7 +75,9 @@
           "scope": "resource",
           "type": "integer",
           "description": "Set the DAP logging level. The default is 1, which logs the DAP protocol and unexpected exceptions. Level 2 also logs exceptions that are considered expected, such as a failure to parse an expression.",
-          "default": 1
+          "default": 1,
+          "minimum": 1,
+          "maximum": 2
         },
         "kdap.environment": {
           "scope": "resource",

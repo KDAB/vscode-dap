@@ -173,7 +173,7 @@ export class GDBDapDescriptorFactory
     }
 
     const logLevel = config.get<number>("logLevel");
-    if (logLevel) {
+    if (logPath && logLevel !== undefined) {
       args.push("-iex", `set debug dap-log-level ${logLevel}`);
     }
 
