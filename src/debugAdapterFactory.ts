@@ -66,6 +66,18 @@ export async function getGdbVersion(
 }
 
 /**
+ * Expands a leading `~` to the user's home directory. VS Code never does this
+ * itself, not even for launch configuration values, so it applies to both
+ * settings and launch configurations.
+ */
+export function expandTilde(value: string): string {
+  if (value === "~" || value.startsWith("~/")) {
+    return path.join(os.homedir(), value.slice(1));
+  }
+  return value;
+}
+
+/**
  * Expands `${workspaceFolder}` and a leading `~` in values read from the
  * `kdap.*` settings. Unlike launch configuration values, settings read via
  * `vscode.workspace.getConfiguration()` are not substituted by VS Code, so
@@ -75,14 +87,9 @@ function expandConfigPath(
   value: string,
   workspaceFolder: vscode.WorkspaceFolder | undefined,
 ): string {
-  let expanded = value.replace(
-    /\$\{workspaceFolder\}/g,
-    workspaceFolder?.uri.fsPath ?? "",
+  return expandTilde(
+    value.replace(/\$\{workspaceFolder\}/g, workspaceFolder?.uri.fsPath ?? ""),
   );
-  if (expanded === "~" || expanded.startsWith("~/")) {
-    expanded = path.join(os.homedir(), expanded.slice(1));
-  }
-  return expanded;
 }
 
 async function findExecutableInPath(name: string): Promise<string | undefined> {
@@ -118,7 +125,8 @@ async function getGdbPath(
   // Explicit path in the launch configuration takes priority.
   const launchConfigPath = session.configuration["gdbPath"];
   if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
-    return resolveGdbPath(launchConfigPath);
+    // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
+    return resolveGdbPath(expandTilde(launchConfigPath));
   }
 
   // Then the extension's own setting.

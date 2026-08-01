@@ -5,7 +5,9 @@ import * as assert from "assert";
 import * as os from "node:os";
 import * as vscode from "vscode";
 
-import { isExecutable } from "../../debugAdapterFactory";
+import * as path from "path";
+
+import { expandTilde, isExecutable } from "../../debugAdapterFactory";
 
 suite("Extension Smoke Tests", () => {
   const extensionId = "KDAB.gdb-dap";
@@ -45,5 +47,20 @@ suite("Extension Smoke Tests", () => {
 
   test("isExecutable rejects a missing path", async () => {
     assert.strictEqual(await isExecutable("/nonexistent/kdap-test/gdb"), false);
+  });
+
+  test("expandTilde expands a leading ~", () => {
+    assert.strictEqual(
+      expandTilde("~/bin/gdb"),
+      path.join(os.homedir(), "bin", "gdb"),
+    );
+    assert.strictEqual(expandTilde("~"), os.homedir());
+  });
+
+  test("expandTilde leaves other paths alone", () => {
+    assert.strictEqual(expandTilde("/usr/bin/gdb"), "/usr/bin/gdb");
+    assert.strictEqual(expandTilde("gdb-multiarch"), "gdb-multiarch");
+    // Not a home directory reference, so it must not be touched.
+    assert.strictEqual(expandTilde("~other/bin/gdb"), "~other/bin/gdb");
   });
 });

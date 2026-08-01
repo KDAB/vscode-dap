@@ -28,7 +28,8 @@ when adding a new configuration.
 
 ## Launch configuration
 
-- `gdbPath`: Absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting.
+- `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
+  `kdap.gdbPath` setting.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
 - `args`: Command-line arguments passed to the inferior, as if by `set args`.
 - `cwd`: The working directory for gdb and the launched program. Defaults to `${workspaceFolder}`.
@@ -39,7 +40,8 @@ when adding a new configuration.
 
 ## Attach configuration
 
-- `gdbPath`: Absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting.
+- `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
+  `kdap.gdbPath` setting.
 - `pid`: The process ID to which gdb should attach.
 - `program`: Path to the executable being debugged.
 - `target`: The target to which gdb should connect, passed to `target remote`.

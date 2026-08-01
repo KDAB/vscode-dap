@@ -142,7 +142,7 @@
             "properties": {
               "gdbPath": {
                 "type": "string",
-                "markdownDescription": "The absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting."
+                "markdownDescription": "The path to the gdb executable to use."
               },
               "program": {
                 "type": "string",
@@ -179,7 +179,7 @@
             "properties": {
               "gdbPath": {
                 "type": "string",
-                "markdownDescription": "The absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting."
+                "markdownDescription": "The path to the gdb executable to use."
               },
               "pid": {
                 "type": [
