@@ -8,6 +8,10 @@
     "type": "git",
     "url": "https://github.com/KDAB/vscode-gdb-dap.git"
   },
+  "bugs": {
+    "url": "https://github.com/KDAB/vscode-gdb-dap/issues"
+  },
+  "homepage": "https://github.com/KDAB/vscode-gdb-dap#readme",
   "engines": {
     "vscode": "^1.90.0"
   },
