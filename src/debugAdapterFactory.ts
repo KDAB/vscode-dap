@@ -5,6 +5,8 @@ import * as fs from "node:fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
+
 export async function isExecutable(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath, fs.constants.X_OK);
@@ -60,6 +62,8 @@ async function getGdbPath(
 export class GDBDapDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory, vscode.Disposable
 {
+  constructor(private readonly context: vscode.ExtensionContext) {}
+
   dispose() {}
 
   async createDebugAdapterDescriptor(
@@ -86,6 +90,10 @@ export class GDBDapDescriptorFactory
     const logLevel = config.get<number>("logLevel");
     if (logLevel) {
       args.push("-iex", `set debug dap-log-level ${logLevel}`);
+    }
+
+    if (config.get<boolean>("qtPrettyPrinters")) {
+      args.push(...(await getQtPrettyPrintersArgs(this.context)));
     }
 
     const environment = config.get<{ [key: string]: string }>("environment");

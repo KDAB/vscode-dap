@@ -79,8 +79,29 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "kdap.qtPrettyPrinters": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically load Qt pretty-printers for gdb. Has no effect until the 'GDB DAP: Download Qt Pretty Printers' command has been run once."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "kdap.downloadQtPrettyPrinters",
+        "title": "Download Qt Pretty Printers",
+        "category": "GDB DAP"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "kdap.downloadQtPrettyPrinters",
+          "when": "isLinux"
+        }
+      ]
     },
     "breakpoints": [
       {
