@@ -32,11 +32,15 @@ when adding a new configuration.
   `kdap.gdbPath` setting.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
 - `args`: Command-line arguments passed to the inferior, as if by `set args`.
-- `cwd`: The working directory for gdb and the launched program. Defaults to `${workspaceFolder}`.
-- `env`: Environment variables for the inferior. Merged into (not replacing) the environment the
-  inferior would otherwise inherit, so `PATH`, `HOME`, etc. stay intact unless explicitly overridden.
-- `stopAtBeginningOfMainSubprogram`: Set a temporary breakpoint at `main`, as if by the `start` command.
-- `stopOnEntry`: Set a temporary breakpoint at the program's first instruction, as if by the `starti` command.
+- `cwd`: The working directory for gdb and the launched program. If omitted, gdb inherits VS Code's
+  working directory rather than the workspace folder, so set this explicitly.
+- `env`: Environment variables for the inferior. Setting this **replaces** the inferior's entire
+  environment rather than adding to it, so `PATH`, `HOME`, etc. must be listed too. If omitted, the
+  inferior inherits gdb's environment.
+- `stopAtBeginningOfMainSubprogram`: Set a temporary breakpoint at `main`, as if by the `start`
+  command. Defaults to `false`.
+- `stopOnEntry`: Set a temporary breakpoint at the program's first instruction, as if by the
+  `starti` command. Defaults to `false`.
 
 ## Attach configuration
 

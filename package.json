@@ -156,13 +156,11 @@
               },
               "cwd": {
                 "type": "string",
-                "description": "The working directory for gdb and the launched program.",
-                "default": "${workspaceFolder}"
+                "markdownDescription": "The working directory for gdb and the launched program. If omitted, gdb inherits VS Code's working directory rather than the workspace folder, so set this explicitly (e.g. `${workspaceFolder}`)."
               },
               "env": {
                 "type": "object",
-                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string. Merged into (not replacing) the environment the inferior would otherwise inherit.",
-                "default": {}
+                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string. Setting this replaces the inferior's entire environment rather than adding to it, so PATH, HOME and friends must be listed too. If omitted, the inferior inherits gdb's environment."
               },
               "stopAtBeginningOfMainSubprogram": {
                 "type": "boolean",
@@ -172,7 +170,7 @@
               "stopOnEntry": {
                 "type": "boolean",
                 "description": "Set a temporary breakpoint at the program's first instruction, as if by the 'starti' command.",
-                "default": true
+                "default": false
               }
             }
           },
