@@ -3,6 +3,7 @@
 
 import * as assert from "assert";
 import * as cp from "child_process";
+import * as fs from "node:fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
 
@@ -126,5 +127,49 @@ suite("GDB DAP debugging", () => {
     await disconnectAndWait(capturedSession);
 
     vscode.debug.removeBreakpoints([breakpoint]);
+  });
+
+  test("launch config's env is merged into, not replacing, the inferior's environment", async function () {
+    this.timeout(60000);
+
+    const processStarted = waitForDapEvent<{ systemProcessId?: number }>(
+      "process",
+      (body) => body.systemProcessId !== undefined,
+    );
+
+    const started = await vscode.debug.startDebugging(undefined, {
+      type: "kdap",
+      request: "launch",
+      name: "GDB DAP env merge test",
+      program: programPath,
+      cwd: fixtureDir,
+      stopOnEntry: true,
+      env: { KDAP_TEST_VAR: "hello" },
+    });
+    assert.ok(started, "debug session should start");
+    const capturedSession = vscode.debug.activeDebugSession;
+    assert.ok(capturedSession, "there should be an active debug session");
+
+    const { systemProcessId } = await processStarted;
+
+    // Read the inferior's real environment directly, rather than via gdb's
+    // "evaluate", since calling getenv() through evaluate makes gdb emit a
+    // spurious DAP "continued" event partway through the call.
+    const environ = await fs.readFile(
+      `/proc/${systemProcessId}/environ`,
+      "utf8",
+    );
+    const inferiorEnv = new Set(environ.split("\0").filter(Boolean));
+
+    assert.ok(
+      inferiorEnv.has("KDAP_TEST_VAR=hello"),
+      "the env var set in the launch config should reach the inferior",
+    );
+    assert.ok(
+      inferiorEnv.has(`PATH=${process.env["PATH"]}`),
+      "PATH should be inherited unchanged even though the launch config set env",
+    );
+
+    await disconnectAndWait(capturedSession);
   });
 });

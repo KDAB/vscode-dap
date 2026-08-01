@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 
 import { GDBDapDescriptorFactory } from "./debugAdapterFactory";
+import { GDBDapConfigurationProvider } from "./debugConfigurationProvider";
 import { downloadQtPrettyPrinters } from "./gdbPrettyPrinters";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -11,6 +12,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(factory);
   context.subscriptions.push(
     vscode.debug.registerDebugAdapterDescriptorFactory("kdap", factory),
+  );
+
+  context.subscriptions.push(
+    vscode.debug.registerDebugConfigurationProvider(
+      "kdap",
+      new GDBDapConfigurationProvider(),
+    ),
   );
 
   context.subscriptions.push(

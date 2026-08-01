@@ -181,6 +181,9 @@ export class GDBDapDescriptorFactory
       args.push(...(await getQtPrettyPrintersArgs(this.context)));
     }
 
+    // VS Code merges this into the extension host's own environment, so gdb
+    // ends up with `process.env` plus these. GDBDapConfigurationProvider
+    // relies on that when it works out what the inferior inherits.
     const environment = config.get<{ [key: string]: string }>("environment");
     const options = environment ? { env: { ...environment } } : undefined;
 

@@ -160,7 +160,7 @@
               },
               "env": {
                 "type": "object",
-                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string.",
+                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string. Merged into (not replacing) the environment the inferior would otherwise inherit.",
                 "default": {}
               },
               "stopAtBeginningOfMainSubprogram": {

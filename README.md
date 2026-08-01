@@ -32,7 +32,8 @@ when adding a new configuration.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
 - `args`: Command-line arguments passed to the inferior, as if by `set args`.
 - `cwd`: The working directory for gdb and the launched program. Defaults to `${workspaceFolder}`.
-- `env`: Environment variables for the inferior.
+- `env`: Environment variables for the inferior. Merged into (not replacing) the environment the
+  inferior would otherwise inherit, so `PATH`, `HOME`, etc. stay intact unless explicitly overridden.
 - `stopAtBeginningOfMainSubprogram`: Set a temporary breakpoint at `main`, as if by the `start` command.
 - `stopOnEntry`: Set a temporary breakpoint at the program's first instruction, as if by the `starti` command.
 
