@@ -16,7 +16,7 @@
     "Debuggers"
   ],
   "activationEvents": [
-    "onDebug"
+    "onDebugResolve:kdap"
   ],
   "main": "./out/extension.js",
   "scripts": {
