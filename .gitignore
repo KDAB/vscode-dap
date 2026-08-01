@@ -1,0 +1,12 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+test/fixtures/hello
+
+# test/cpp_test CMake build artifacts
+test/cpp_test/build-dev
+test/cpp_test/compile_commands.json
+test/cpp_test/.cache
+core

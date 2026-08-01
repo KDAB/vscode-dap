@@ -1,0 +1,70 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch Current Target (GDB DAP)",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "args": [],
+        "cwd": "${command:cmake.buildDirectory}"
+      },
+      {
+        "name": "Launch Current Target, stop at main",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "cwd": "${command:cmake.buildDirectory}",
+        "stopAtBeginningOfMainSubprogram": true
+      },
+      {
+        "name": "Launch test_args with arguments",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${workspaceFolder}/build-dev/test_args",
+        "args": ["foo", "bar"],
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "name": "Launch test_env with environment",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${workspaceFolder}/build-dev/test_env",
+        "env": {
+          "MY_ENV": "hello from vscode"
+        },
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "name": "Attach to test_attach (by PID)",
+        "type": "kdap",
+        "request": "attach",
+        "pid": "${input:attachPid}"
+      },
+      {
+        "name": "Load core dump from test_crash",
+        "type": "kdap",
+        "request": "attach",
+        "program": "${workspaceFolder}/build-dev/test_crash",
+        "coreFile": "${workspaceFolder}/core"
+      }
+    ],
+    "inputs": [
+      {
+        "id": "attachPid",
+        "type": "promptString",
+        "description": "PID of the running test_attach process (run it manually first, e.g. ./build-dev/test_attach &)"
+      }
+    ]
+  },
+  "settings": {
+    "git.openRepositoryInParentFolders": "never",
+    "cmake.enableAutomaticKitScan": false
+  }
+}

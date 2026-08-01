@@ -1,0 +1,223 @@
+{
+  "name": "gdb-dap",
+  "displayName": "GDB DAP",
+  "description": "Debug C/C++ programs using GDB's built-in Debug Adapter Protocol support",
+  "version": "0.1.0",
+  "publisher": "KDAB",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamsergio/vscode-gdb-dap.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "license": "MIT",
+  "categories": [
+    "Debuggers"
+  ],
+  "activationEvents": [
+    "onDebug"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "tsc -p tsconfig.test.json && npm run lint",
+    "lint": "eslint src/ --max-warnings 0",
+    "test": "vscode-test",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "format:fix": "prettier --write \"src/**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.20.1",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.7.0",
+    "mocha": "^11.7.6",
+    "prettier": "3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0"
+  },
+  "keywords": [
+    "KDAB",
+    "GDB",
+    "DAP",
+    "debugger",
+    "C",
+    "C++"
+  ],
+  "icon": "kdab.png",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "GDB DAP",
+      "properties": {
+        "kdap.gdbPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "The path to the gdb binary. Defaults to searching for 'gdb' in PATH."
+        },
+        "kdap.logPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Enable DAP logging. Logs are written to this filename. If empty, logging is disabled."
+        },
+        "kdap.logLevel": {
+          "scope": "resource",
+          "type": "integer",
+          "description": "Set the DAP logging level. The default is 1, which logs the DAP protocol and unexpected exceptions. Level 2 also logs exceptions that are considered expected, such as a failure to parse an expression.",
+          "default": 1
+        },
+        "kdap.environment": {
+          "scope": "resource",
+          "type": "object",
+          "default": {},
+          "description": "Extra environment variables to set on the gdb process.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "breakpoints": [
+      {
+        "language": "c"
+      },
+      {
+        "language": "cpp"
+      },
+      {
+        "language": "rust"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "kdap",
+        "label": "GDB (DAP)",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "gdbPath": {
+                "type": "string",
+                "markdownDescription": "The absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting."
+              },
+              "program": {
+                "type": "string",
+                "description": "Path to the executable to debug. Corresponds to gdb's 'file' command."
+              },
+              "args": {
+                "type": "array",
+                "description": "Command-line arguments passed to the inferior, as if by 'set args'.",
+                "default": []
+              },
+              "cwd": {
+                "type": "string",
+                "description": "The working directory for gdb and the launched program.",
+                "default": "${workspaceFolder}"
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string.",
+                "default": {}
+              },
+              "stopAtBeginningOfMainSubprogram": {
+                "type": "boolean",
+                "description": "Set a temporary breakpoint at the program's main procedure, as if by the 'start' command.",
+                "default": false
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Set a temporary breakpoint at the program's first instruction, as if by the 'starti' command.",
+                "default": true
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "gdbPath": {
+                "type": "string",
+                "markdownDescription": "The absolute path to the gdb executable to use. Overrides the `kdap.gdbPath` setting."
+              },
+              "pid": {
+                "type": [
+                  "number",
+                  "string"
+                ],
+                "description": "The process ID to which gdb should attach."
+              },
+              "program": {
+                "type": "string",
+                "description": "Path to the executable being debugged. In some cases gdb can determine this automatically, but for many remote targets it must be supplied."
+              },
+              "target": {
+                "type": "string",
+                "description": "The target to which gdb should connect, passed to the 'target remote' command."
+              },
+              "coreFile": {
+                "type": "string",
+                "description": "Path to a core dump file to load instead of attaching to a live process."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "kdap",
+            "request": "launch",
+            "name": "Debug",
+            "program": "${workspaceFolder}/<your program>",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "GDB DAP: Launch",
+            "description": "Launch a program under gdb",
+            "body": {
+              "type": "kdap",
+              "request": "launch",
+              "name": "${2:Launch}",
+              "program": "^\"\\${workspaceFolder}/${1:<your program>}\"",
+              "args": [],
+              "cwd": "^\"\\${workspaceFolder}\"",
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "GDB DAP: Attach",
+            "description": "Attach gdb to a running process",
+            "body": {
+              "type": "kdap",
+              "request": "attach",
+              "name": "${2:Attach}",
+              "program": "${1:<your program>}"
+            }
+          },
+          {
+            "label": "GDB DAP: Load Core Dump",
+            "description": "Load a core dump in gdb",
+            "body": {
+              "type": "kdap",
+              "request": "attach",
+              "name": "${2:Core}",
+              "program": "${1:<your program>}",
+              "coreFile": "${1:<your program>}.core"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
