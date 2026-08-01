@@ -3,6 +3,7 @@
 
 import { execFile } from "node:child_process";
 import * as fs from "node:fs/promises";
+import * as os from "node:os";
 import * as path from "path";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
@@ -54,6 +55,26 @@ export async function getGdbVersion(
   }
 }
 
+/**
+ * Expands `${workspaceFolder}` and a leading `~` in values read from the
+ * `kdap.*` settings. Unlike launch configuration values, settings read via
+ * `vscode.workspace.getConfiguration()` are not substituted by VS Code, so
+ * the extension has to do it itself.
+ */
+function expandConfigPath(
+  value: string,
+  workspaceFolder: vscode.WorkspaceFolder | undefined,
+): string {
+  let expanded = value.replace(
+    /\$\{workspaceFolder\}/g,
+    workspaceFolder?.uri.fsPath ?? "",
+  );
+  if (expanded === "~" || expanded.startsWith("~/")) {
+    expanded = path.join(os.homedir(), expanded.slice(1));
+  }
+  return expanded;
+}
+
 async function findGdbInPath(): Promise<string | undefined> {
   const envPath = process.env["PATH"];
   if (!envPath) {
@@ -85,7 +106,7 @@ async function getGdbPath(
   );
   const configPath = config.get<string>("gdbPath");
   if (configPath && configPath.length !== 0) {
-    return configPath;
+    return expandConfigPath(configPath, session.workspaceFolder);
   }
 
   // Fall back to searching PATH.
@@ -131,7 +152,10 @@ export class GDBDapDescriptorFactory
 
     const logPath = config.get<string>("logPath");
     if (logPath) {
-      args.push("-iex", `set debug dap-log-file ${logPath}`);
+      args.push(
+        "-iex",
+        `set debug dap-log-file ${expandConfigPath(logPath, session.workspaceFolder)}`,
+      );
     }
 
     const logLevel = config.get<number>("logLevel");
