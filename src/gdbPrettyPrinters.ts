@@ -9,11 +9,13 @@ import * as vscode from "vscode";
 const GDB_QT_PRINTERS_BASE_URL =
   "https://invent.kde.org/kdevelop/kdevelop/-/raw/master/plugins/gdb/printers";
 
+const DOWNLOAD_TIMEOUT_MS = 10_000;
+
 /** Downloads the contents of a URL, following redirects. */
 function downloadFile(url: string, redirectsLeft = 5): Promise<string> {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
+    const req = https
+      .get(url, { timeout: DOWNLOAD_TIMEOUT_MS }, (res) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400 && res.headers.location) {
           if (redirectsLeft <= 0) {
@@ -31,11 +33,16 @@ function downloadFile(url: string, redirectsLeft = 5): Promise<string> {
           return;
         }
 
+        res.setEncoding("utf8");
         let data = "";
         res.on("data", (chunk) => (data += chunk));
         res.on("end", () => resolve(data));
       })
       .on("error", reject);
+
+    req.on("timeout", () => {
+      req.destroy(new Error("Timed out downloading " + url));
+    });
   });
 }
 
@@ -64,26 +71,45 @@ export async function downloadQtPrettyPrinters(
   const qtCreatorDebuggerDir = path.join(dir, "qtcreator_debugger");
 
   try {
-    await fs.mkdir(qtCreatorDebuggerDir, { recursive: true });
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Downloading Qt gdb pretty printers",
+      },
+      async () => {
+        await fs.mkdir(qtCreatorDebuggerDir, { recursive: true });
 
-    for (const filename of ["helper.py", "qt.py"]) {
-      const contents = await downloadFile(
-        GDB_QT_PRINTERS_BASE_URL + "/" + filename,
-      );
-      await fs.writeFile(path.join(dir, filename), contents);
-    }
+        // qt.py's presence is used as the "is it installed?" sentinel (see
+        // getQtPrettyPrintersArgs), and it imports qtcreator_debugger at
+        // module scope. Download and write everything else first, and write
+        // qt.py last, so a failure partway through never leaves qt.py
+        // pointing at a broken install.
+        const helperContents = await downloadFile(
+          GDB_QT_PRINTERS_BASE_URL + "/helper.py",
+        );
+        const qtContents = await downloadFile(
+          GDB_QT_PRINTERS_BASE_URL + "/qt.py",
+        );
 
-    for (const filename of [
-      "__init__.py",
-      "dumper.py",
-      "gdbbridge.py",
-      "qttypes.py",
-    ]) {
-      const contents = await downloadFile(
-        GDB_QT_PRINTERS_BASE_URL + "/qtcreator_debugger/" + filename,
-      );
-      await fs.writeFile(path.join(qtCreatorDebuggerDir, filename), contents);
-    }
+        for (const filename of [
+          "__init__.py",
+          "dumper.py",
+          "gdbbridge.py",
+          "qttypes.py",
+        ]) {
+          const contents = await downloadFile(
+            GDB_QT_PRINTERS_BASE_URL + "/qtcreator_debugger/" + filename,
+          );
+          await fs.writeFile(
+            path.join(qtCreatorDebuggerDir, filename),
+            contents,
+          );
+        }
+
+        await fs.writeFile(path.join(dir, "helper.py"), helperContents);
+        await fs.writeFile(path.join(dir, "qt.py"), qtContents);
+      },
+    );
 
     vscode.window.showInformationMessage(
       "Qt gdb pretty printers downloaded to " + dir,
