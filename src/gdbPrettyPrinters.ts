@@ -7,7 +7,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 const GDB_QT_PRINTERS_BASE_URL =
-  "https://invent.kde.org/kdevelop/kdevelop/-/raw/master/plugins/gdb/printers";
+  "https://raw.githubusercontent.com/iamsergio/kdevelop/vscode-gdb-dap/plugins/gdb/printers";
 
 const DOWNLOAD_TIMEOUT_MS = 10_000;
 

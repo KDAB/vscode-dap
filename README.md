@@ -65,6 +65,6 @@ when adding a new configuration.
 ## Commands
 
 - **GDB DAP: Download Qt Pretty Printers** — downloads the
-  [KDevelop Qt gdb pretty-printer scripts](https://invent.kde.org/kdevelop/kdevelop/-/tree/master/plugins/gdb/printers)
+  [KDevelop Qt gdb pretty-printer scripts](https://github.com/iamsergio/kdevelop/tree/vscode-gdb-dap/plugins/gdb/printers)
   into the extension's global storage. Run this once via the Command Palette to enable Qt
   pretty-printing (see `kdap.qtPrettyPrinters` above).
