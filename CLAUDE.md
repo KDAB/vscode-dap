@@ -37,6 +37,9 @@ npm test                     # Requires GDB 15.2+ and gcc on PATH
 - `src/debugAdapterFactory.ts` — resolves which `gdb` binary to launch (launch config's
   `gdbPath` > `kdap.gdbPath` setting > `PATH` lookup) and builds the `gdb -i dap` command line,
   including optional DAP logging flags.
+- `src/gdbPrettyPrinters.ts` — implements the "GDB DAP: Download Qt Pretty Printers" command,
+  which fetches the KDevelop Qt gdb pretty-printer scripts into the extension's global storage
+  for use when `kdap.qtPrettyPrinters` is enabled.
 
 ### Tests
 

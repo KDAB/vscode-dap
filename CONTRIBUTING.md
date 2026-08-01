@@ -15,8 +15,9 @@ debug it end-to-end).
 
 ## Commit
 
-We use conventional commits. Prefix your commit message with `fix: `, `feat: ` or `chore: `
-depending if it's a fix, a feature or misc change. This will be used for automatic changelog generation.
+We use conventional commits. Prefix your commit message with `fix: `, `feat: `, `chore: `,
+`ci: `, `test: `, `refactor: ` or `docs: ` depending on the nature of the change (enforced by
+the pre-commit hook). This will be used for automatic changelog generation.
 
 ## Releasing
 

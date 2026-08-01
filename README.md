@@ -50,3 +50,12 @@ when adding a new configuration.
 - `kdap.logPath`: Enable DAP logging to this file.
 - `kdap.logLevel`: DAP logging verbosity (default `1`).
 - `kdap.environment`: Extra environment variables set on the gdb process itself.
+- `kdap.qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `true`). Has
+  no effect until the "GDB DAP: Download Qt Pretty Printers" command has been run once.
+
+## Commands
+
+- **GDB DAP: Download Qt Pretty Printers** — downloads the
+  [KDevelop Qt gdb pretty-printer scripts](https://invent.kde.org/kdevelop/kdevelop/-/tree/master/plugins/gdb/printers)
+  into the extension's global storage. Run this once via the Command Palette to enable Qt
+  pretty-printing (see `kdap.qtPrettyPrinters` above).
