@@ -1,11 +1,18 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
+import { execFile } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as path from "path";
+import { promisify } from "node:util";
 import * as vscode from "vscode";
 
 import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
+
+const execFileAsync = promisify(execFile);
+
+/** The lowest gdb version whose DAP support this extension relies on. */
+export const MIN_GDB_VERSION: readonly [number, number] = [15, 2];
 
 export async function isExecutable(filePath: string): Promise<boolean> {
   try {
@@ -14,6 +21,37 @@ export async function isExecutable(filePath: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+/** Parses the "X.Y" version out of gdb's `--version` first line, e.g. "GNU gdb (Ubuntu 15.2-0ubuntu1) 15.2". */
+export function parseGdbVersion(
+  versionOutput: string,
+): [number, number] | undefined {
+  const match = /^GNU gdb.*?(\d+)\.(\d+)/.exec(versionOutput);
+  if (!match) {
+    return undefined;
+  }
+  return [Number(match[1]), Number(match[2])];
+}
+
+export function isGdbVersionSufficient(
+  version: readonly [number, number],
+): boolean {
+  const [major, minor] = version;
+  const [minMajor, minMinor] = MIN_GDB_VERSION;
+  return major > minMajor || (major === minMajor && minor >= minMinor);
+}
+
+/** Runs `gdb --version` and parses the result. Returns undefined if gdb can't be run or its version can't be parsed. */
+export async function getGdbVersion(
+  gdbPath: string,
+): Promise<[number, number] | undefined> {
+  try {
+    const { stdout } = await execFileAsync(gdbPath, ["--version"]);
+    return parseGdbVersion(stdout);
+  } catch {
+    return undefined;
+  }
 }
 
 async function findGdbInPath(): Promise<string | undefined> {
@@ -75,6 +113,15 @@ export class GDBDapDescriptorFactory
       return undefined;
     }
 
+    const version = await getGdbVersion(gdbPath);
+    if (!version || !isGdbVersionSufficient(version)) {
+      await GDBDapDescriptorFactory.showGdbVersionTooOldMessage(
+        gdbPath,
+        version,
+      );
+      return undefined;
+    }
+
     const config = vscode.workspace.getConfiguration(
       "kdap",
       session.workspaceFolder,
@@ -107,6 +154,29 @@ export class GDBDapDescriptorFactory
     const message = gdbPath
       ? `gdb path '${gdbPath}' is not a valid executable.`
       : "Unable to find gdb. Install GDB 15.2 or later, or set kdap.gdbPath.";
+    const openSettingsAction = "Open Settings";
+    const choice = await vscode.window.showErrorMessage(
+      message,
+      openSettingsAction,
+    );
+
+    if (choice === openSettingsAction) {
+      await vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "kdap.gdbPath",
+      );
+    }
+  }
+
+  /** Shows a message box when the gdb executable's version is too old, or couldn't be determined. */
+  static async showGdbVersionTooOldMessage(
+    gdbPath: string,
+    version: [number, number] | undefined,
+  ) {
+    const [minMajor, minMinor] = MIN_GDB_VERSION;
+    const message = version
+      ? `gdb at '${gdbPath}' is version ${version[0]}.${version[1]}, but this extension requires ${minMajor}.${minMinor} or later.`
+      : `Unable to determine the version of gdb at '${gdbPath}'. This extension requires gdb ${minMajor}.${minMinor} or later.`;
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,
