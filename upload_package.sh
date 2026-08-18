@@ -20,7 +20,7 @@ if [ ! -f "$PACKAGE_FILENAME" ]; then
 fi
 
 # Check if release exists:
-if ! gh release view "$TAG_NAME" &> /dev/null; then
+if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then;
     # Should not happen, as releases are created by release-please
     echo "Release $TAG_NAME does not exist"
     exit 1
