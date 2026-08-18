@@ -106,12 +106,30 @@
         "command": "kdap.downloadQtPrettyPrinters",
         "title": "Download Qt Pretty Printers",
         "category": "GDB DAP"
+      },
+      {
+        "command": "kdap.runWithArgs",
+        "title": "Run with Args",
+        "category": "GDB DAP"
+      },
+      {
+        "command": "kdap.debugWithArgs",
+        "title": "Debug with Args",
+        "category": "GDB DAP"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "kdap.downloadQtPrettyPrinters",
+          "when": "isLinux"
+        },
+        {
+          "command": "kdap.runWithArgs",
+          "when": "isLinux"
+        },
+        {
+          "command": "kdap.debugWithArgs",
           "when": "isLinux"
         }
       ]
