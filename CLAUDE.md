@@ -26,9 +26,13 @@ npm run compile              # Compile TypeScript to JavaScript
 ### Testing & Building
 
 ```bash
-npm test                     # Requires GDB 16.1+ and gcc on PATH
+./test.sh                    # Everything; requires GDB 16.1+ and gcc on PATH
+./test.sh --unit             # Unit tests only, no VS Code instance needed
 ./build_package.sh           # Package the extension as a .vsix file
 ```
+
+`./test.sh` wraps `npm test`, which is `npm run test:unit` (plain mocha) followed by
+`npm run test:integration` (`vscode-test`, which boots a real VS Code per suite).
 
 ## Architecture
 
@@ -51,6 +55,9 @@ npm test                     # Requires GDB 16.1+ and gcc on PATH
 - `src/test/integration/debug.test.ts` — compiles `test/fixtures/hello.c` with gcc, starts a
   real `kdap` debug session, sets a breakpoint, and verifies GDB stops there and can evaluate an
   expression. This is the test that actually exercises the DAP-to-DAP communication path.
+- `src/test/unit/` — plain mocha, run without a VS Code instance, so nothing here (nor anything
+  it imports) may `import "vscode"`. Registered by the `test:unit` glob rather than by name,
+  unlike the integration suites, which `.vscode-test.js` lists individually.
 
 ## Development Workflow
 

@@ -3,7 +3,7 @@
 
 import * as assert from "assert";
 
-import { splitArguments } from "../../runWithArgs";
+import { splitArguments } from "../../argumentSplitter";
 
 suite("splitArguments", () => {
   const cases: [string, string[]][] = [

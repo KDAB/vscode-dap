@@ -29,7 +29,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "tsc -p tsconfig.test.json && npm run lint",
     "lint": "eslint src/ --max-warnings 0",
-    "test": "vscode-test",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha --ui tdd \"out/test/unit/**/*.test.js\"",
+    "test:integration": "vscode-test",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "format:fix": "prettier --write \"src/**/*.ts\""
   },

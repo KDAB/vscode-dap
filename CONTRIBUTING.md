@@ -10,8 +10,8 @@ code --install-extension gdb-dap-*.vsix
 
 ## Automatic tests
 
-Run `npm test`. Requires GDB 16.1+ and gcc on `PATH` (the tests compile a small C fixture and
-debug it end-to-end).
+Run `./test.sh`. Requires GDB 16.1+ and gcc on `PATH` (the tests compile a small C fixture and
+debug it end-to-end). `./test.sh --unit` runs just the unit tests, which need neither.
 
 ## Commit
 
