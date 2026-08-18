@@ -9,22 +9,71 @@ interface LaunchConfigCandidate {
 }
 
 /**
- * Splits a string into shell-like argument tokens: double-quoted segments
- * (with `\"` and `\\` recognised inside them), single-quoted segments taken
- * literally, and whitespace-separated bare words.
+ * Splits a string into arguments the way a POSIX shell would, minus any
+ * expansion: whitespace separates arguments, quotes may open and close
+ * anywhere within one, and adjacent segments concatenate - `--name="two
+ * words"` is a single argument.
+ *
+ * Outside quotes, a backslash escapes the character after it; a trailing one
+ * is literal. Inside double quotes it escapes only `"` and `\`, and is
+ * literal otherwise, so `"\d+"` keeps its backslash. Single quotes take their
+ * contents literally, backslashes included.
+ *
+ * Throws if the input ends inside a quoted segment.
  */
 export function splitArguments(input: string): string[] {
-  const regex = /"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g;
   const args: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(input)) !== null) {
-    if (match[1] !== undefined) {
-      args.push(match[1].replace(/\\(.)/g, "$1"));
-    } else if (match[2] !== undefined) {
-      args.push(match[2]);
+  let current = "";
+  // Tracked separately from `current`, so that `""` yields an empty argument
+  // rather than nothing at all.
+  let started = false;
+  let quote: '"' | "'" | undefined;
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+
+    if (quote === "'") {
+      if (char === "'") {
+        quote = undefined;
+      } else {
+        current += char;
+      }
+    } else if (quote === '"') {
+      if (char === '"') {
+        quote = undefined;
+      } else if (
+        char === "\\" &&
+        (input[i + 1] === '"' || input[i + 1] === "\\")
+      ) {
+        current += input[++i];
+      } else {
+        current += char;
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char;
+      started = true;
+    } else if (char === "\\" && i + 1 < input.length) {
+      current += input[++i];
+      started = true;
+    } else if (/\s/.test(char)) {
+      if (started) {
+        args.push(current);
+        current = "";
+        started = false;
+      }
     } else {
-      args.push(match[3]);
+      current += char;
+      started = true;
     }
+  }
+
+  if (quote !== undefined) {
+    throw new Error(
+      `Unterminated ${quote === '"' ? "double" : "single"} quote in arguments.`,
+    );
+  }
+  if (started) {
+    args.push(current);
   }
   return args;
 }
@@ -89,10 +138,17 @@ async function runOrDebugWithArgs(noDebug: boolean): Promise<void> {
     return;
   }
 
-  const config: vscode.DebugConfiguration = {
-    ...picked.config,
-    args: splitArguments(input),
-  };
+  let args: string[];
+  try {
+    args = splitArguments(input);
+  } catch (error) {
+    await vscode.window.showErrorMessage(
+      error instanceof Error ? error.message : String(error),
+    );
+    return;
+  }
+
+  const config: vscode.DebugConfiguration = { ...picked.config, args };
   if (noDebug) {
     // gdb's DAP launch handler doesn't know about "noDebug", so it would still
     // honour these and stop the inferior - with only Stop and Restart in the

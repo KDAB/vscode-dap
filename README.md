@@ -70,7 +70,7 @@ when adding a new configuration.
   into the extension's global storage. Run this once via the Command Palette to enable Qt
   pretty-printing (see `kdap.qtPrettyPrinters` above).
 - **GDB DAP: Debug with Args** — starts one of your `kdap` launch configurations, prompting for
-  the arguments to pass to the inferior instead of using the configuration's `args`. Quoting
-  works for whole arguments, so `--foo bar "quoted value"` yields three arguments.
-- **GDB DAP: Run with Args** — the same, but without debugging: breakpoints are ignored, as are
-  `stopOnEntry` and `stopAtBeginningOfMainSubprogram`.
+  the arguments to pass to the inferior instead of using the configuration's `args`. The input
+  is split like a shell splits a command line, so quote arguments containing spaces.
+- **GDB DAP: Run with Args** — the same, but without debugging: breakpoints and entry stops are
+  ignored.
