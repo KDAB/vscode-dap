@@ -89,11 +89,19 @@ async function runOrDebugWithArgs(noDebug: boolean): Promise<void> {
     return;
   }
 
-  await vscode.debug.startDebugging(
-    picked.folder,
-    { ...picked.config, args: splitArguments(input) },
-    { noDebug },
-  );
+  const config: vscode.DebugConfiguration = {
+    ...picked.config,
+    args: splitArguments(input),
+  };
+  if (noDebug) {
+    // gdb's DAP launch handler doesn't know about "noDebug", so it would still
+    // honour these and stop the inferior - with only Stop and Restart in the
+    // toolbar, leaving no way to continue.
+    delete config["stopOnEntry"];
+    delete config["stopAtBeginningOfMainSubprogram"];
+  }
+
+  await vscode.debug.startDebugging(picked.folder, config, { noDebug });
 }
 
 export function runWithArgs(): Promise<void> {
