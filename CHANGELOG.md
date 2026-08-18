@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/KDAB/vscode-gdb-dap/compare/v1.0.0...v1.1.0) (2026-08-18)
+
+
+### Features
+
+* add Run/Debug with Args commands ([65d529a](https://github.com/KDAB/vscode-gdb-dap/commit/65d529a3d45169a505a79c9c93f0e2eafe9f7bab))
+
+
+### Bug Fixes
+
+* don't stop at entry when running without debugging ([eeefec9](https://github.com/KDAB/vscode-gdb-dap/commit/eeefec9b434d56113730790dff6c51797772fd98))
+* split arguments the way a shell would ([b8127e5](https://github.com/KDAB/vscode-gdb-dap/commit/b8127e580705077cc294cd976afd71ed3e47dc21))
+
 ## 1.0.0 (2026-08-01)
 
 
