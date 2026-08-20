@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { GDBDapDescriptorFactory } from "./debugAdapterFactory";
 import { GDBDapConfigurationProvider } from "./debugConfigurationProvider";
 import { downloadQtPrettyPrinters } from "./gdbPrettyPrinters";
+import { loadCoreFile } from "./loadCoreFile";
 import { debugWithArgs, runWithArgs } from "./runWithArgs";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -33,6 +34,9 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("kdap.debugWithArgs", debugWithArgs),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("kdap.loadCoreFile", loadCoreFile),
   );
 }
 

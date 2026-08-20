@@ -118,6 +118,11 @@
         "command": "kdap.debugWithArgs",
         "title": "Debug with Args",
         "category": "GDB DAP"
+      },
+      {
+        "command": "kdap.loadCoreFile",
+        "title": "Load Core File",
+        "category": "GDB DAP"
       }
     ],
     "menus": {
@@ -132,6 +137,10 @@
         },
         {
           "command": "kdap.debugWithArgs",
+          "when": "isLinux"
+        },
+        {
+          "command": "kdap.loadCoreFile",
           "when": "isLinux"
         }
       ]

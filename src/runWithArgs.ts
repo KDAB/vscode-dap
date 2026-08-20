@@ -4,61 +4,21 @@
 import * as vscode from "vscode";
 
 import { splitArguments } from "./argumentSplitter";
-
-interface LaunchConfigCandidate {
-  folder: vscode.WorkspaceFolder | undefined;
-  config: vscode.DebugConfiguration;
-}
-
-/** Every `kdap` launch configuration across all workspace folders (or the single implicit folder when there's no workspace). */
-function findKdapLaunchConfigurations(): LaunchConfigCandidate[] {
-  const folders = vscode.workspace.workspaceFolders ?? [undefined];
-  const candidates: LaunchConfigCandidate[] = [];
-  for (const folder of folders) {
-    const configurations = vscode.workspace
-      .getConfiguration("launch", folder)
-      .get<vscode.DebugConfiguration[]>("configurations", []);
-    for (const config of configurations) {
-      if (config["type"] === "kdap" && config["request"] === "launch") {
-        candidates.push({ folder, config });
-      }
-    }
-  }
-  return candidates;
-}
-
-/** Picks a `kdap` launch configuration, prompting the user only when there's more than one to choose from. */
-async function pickLaunchConfiguration(): Promise<
-  LaunchConfigCandidate | undefined
-> {
-  const candidates = findKdapLaunchConfigurations();
-  if (candidates.length === 0) {
-    await vscode.window.showErrorMessage(
-      "No 'kdap' launch configuration found in launch.json.",
-    );
-    return undefined;
-  }
-  if (candidates.length === 1) {
-    return candidates[0];
-  }
-
-  const multipleFolders =
-    new Set(candidates.map((candidate) => candidate.folder)).size > 1;
-  const picked = await vscode.window.showQuickPick(
-    candidates.map((candidate) => ({
-      label: candidate.config["name"],
-      description: multipleFolders ? candidate.folder?.name : undefined,
-      candidate,
-    })),
-    { placeHolder: "Select a launch configuration" },
-  );
-  return picked?.candidate;
-}
+import {
+  findKdapLaunchConfigurations,
+  pickLaunchConfiguration,
+} from "./launchConfigPicker";
 
 /** Prompts for arguments, then starts `config` with them, either running or debugging depending on `noDebug`. */
 async function runOrDebugWithArgs(noDebug: boolean): Promise<void> {
-  const picked = await pickLaunchConfiguration();
+  const candidates = findKdapLaunchConfigurations("launch");
+  const picked = await pickLaunchConfiguration(candidates);
   if (!picked) {
+    if (candidates.length === 0) {
+      await vscode.window.showErrorMessage(
+        "No 'kdap' launch configuration found in launch.json.",
+      );
+    }
     return;
   }
 
