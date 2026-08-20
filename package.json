@@ -169,6 +169,11 @@
                 "type": "string",
                 "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
               },
+              "skipGdbinit": {
+                "type": "boolean",
+                "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
+                "default": false
+              },
               "program": {
                 "type": "string",
                 "description": "Path to the executable to debug. Corresponds to gdb's 'file' command."
@@ -207,6 +212,11 @@
               "sysroot": {
                 "type": "string",
                 "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
+              },
+              "skipGdbinit": {
+                "type": "boolean",
+                "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
+                "default": false
               },
               "pid": {
                 "type": [

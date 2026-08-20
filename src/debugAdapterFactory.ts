@@ -194,7 +194,11 @@ export class GDBDapDescriptorFactory
       session.workspaceFolder,
     );
 
-    const args: string[] = ["-i", "dap"];
+    const args: string[] = ["-q", "-i", "dap"];
+
+    if (session.configuration["skipGdbinit"] === true) {
+      args.push("-nx");
+    }
 
     const sysroot: unknown = session.configuration["sysroot"];
     if (typeof sysroot === "string" && sysroot.length !== 0) {
