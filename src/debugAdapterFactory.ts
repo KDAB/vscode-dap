@@ -211,6 +211,18 @@ export class GDBDapDescriptorFactory
       args.push("-iex", `set sysroot ${sysrootPath}`);
     }
 
+    const sourceFileMap: unknown = session.configuration["sourceFileMap"];
+    if (sourceFileMap && typeof sourceFileMap === "object") {
+      for (const [from, to] of Object.entries(
+        sourceFileMap as Record<string, unknown>,
+      )) {
+        if (typeof to === "string") {
+          // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
+          args.push("-iex", `set substitute-path ${from} ${expandTilde(to)}`);
+        }
+      }
+    }
+
     const logPath = config.get<string>("logPath");
     if (logPath) {
       args.push(

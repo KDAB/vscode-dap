@@ -183,6 +183,13 @@
                 "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
                 "default": false
               },
+              "sourceFileMap": {
+                "type": "object",
+                "description": "Maps source paths recorded in the debug info to their location on disk, as if by 'set substitute-path'. Each key is the path as recorded in the debug info and each value is where that path is found locally.",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
               "program": {
                 "type": "string",
                 "description": "Path to the executable to debug. Corresponds to gdb's 'file' command."
@@ -226,6 +233,13 @@
                 "type": "boolean",
                 "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
                 "default": false
+              },
+              "sourceFileMap": {
+                "type": "object",
+                "description": "Maps source paths recorded in the debug info to their location on disk, as if by 'set substitute-path'. Each key is the path as recorded in the debug info and each value is where that path is found locally.",
+                "additionalProperties": {
+                  "type": "string"
+                }
               },
               "pid": {
                 "type": [
