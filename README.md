@@ -32,6 +32,8 @@ when adding a new configuration.
 
 - `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
   `kdap.gdbPath` setting.
+- `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
+  info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
 - `args`: Command-line arguments passed to the inferior, as if by `set args`.
 - `cwd`: The working directory for gdb and the launched program. If omitted, gdb inherits VS Code's
@@ -48,6 +50,8 @@ when adding a new configuration.
 
 - `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
   `kdap.gdbPath` setting.
+- `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
+  info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
 - `pid`: The process ID to which gdb should attach.
 - `program`: Path to the executable being debugged.
 - `target`: The target to which gdb should connect, passed to `target remote`.

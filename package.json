@@ -165,6 +165,10 @@
                 "type": "string",
                 "markdownDescription": "The path to the gdb executable to use."
               },
+              "sysroot": {
+                "type": "string",
+                "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
+              },
               "program": {
                 "type": "string",
                 "description": "Path to the executable to debug. Corresponds to gdb's 'file' command."
@@ -199,6 +203,10 @@
               "gdbPath": {
                 "type": "string",
                 "markdownDescription": "The path to the gdb executable to use."
+              },
+              "sysroot": {
+                "type": "string",
+                "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
               },
               "pid": {
                 "type": [

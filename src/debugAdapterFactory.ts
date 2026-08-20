@@ -39,6 +39,15 @@ export async function isExecutable(filePath: string): Promise<boolean> {
   return true;
 }
 
+/** Whether `dirPath` exists and is a directory. */
+export async function isDirectory(dirPath: string): Promise<boolean> {
+  try {
+    return (await fs.stat(dirPath)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 /** Parses the "X.Y" version out of gdb's `--version` first line, e.g. "GNU gdb (Ubuntu 15.2-0ubuntu1) 15.2". */
 export function parseGdbVersion(
   versionOutput: string,
@@ -187,6 +196,17 @@ export class GDBDapDescriptorFactory
 
     const args: string[] = ["-i", "dap"];
 
+    const sysroot: unknown = session.configuration["sysroot"];
+    if (typeof sysroot === "string" && sysroot.length !== 0) {
+      // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
+      const sysrootPath = expandTilde(sysroot);
+      if (!(await isDirectory(sysrootPath))) {
+        await GDBDapDescriptorFactory.showSysrootNotFoundMessage(sysrootPath);
+        return undefined;
+      }
+      args.push("-iex", `set sysroot ${sysrootPath}`);
+    }
+
     const logPath = config.get<string>("logPath");
     if (logPath) {
       args.push(
@@ -230,6 +250,13 @@ export class GDBDapDescriptorFactory
         "kdap.gdbPath",
       );
     }
+  }
+
+  /** Shows a message box when the launch configuration's `sysroot` doesn't point at an existing folder. */
+  static async showSysrootNotFoundMessage(sysrootPath: string) {
+    await vscode.window.showErrorMessage(
+      `sysroot path '${sysrootPath}' is not an existing folder.`,
+    );
   }
 
   /** Shows a message box when the gdb executable's version is too old, or couldn't be determined. */
