@@ -8,7 +8,9 @@ def qsizef_summary(valobj, internal_dict):
     w = valobj.GetChildMemberWithName("wd")
     h = valobj.GetChildMemberWithName("ht")
     if not w.IsValid() or not h.IsValid():
-        return None
+        # LLDB renders a summary function's None return as the literal text
+        # "None" rather than falling back to the default struct display.
+        return ""
     # same output as QDebug operator<<(QSizeF)
     return "QSizeF(%g, %g)" % (_common.double(w), _common.double(h))
 

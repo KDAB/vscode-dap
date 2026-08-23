@@ -6,6 +6,7 @@
 #include <QPoint>
 #include <QRect>
 #include <QSize>
+#include <QVector>
 
 // The runners break here and inspect the frame above, so main() can grow new
 // values without any line number in test.sh needing an update.
@@ -41,6 +42,9 @@ int main()
     QLine lnZero(QPoint(0, 0), QPoint(0, 0));
 
     QLineF lnf(QPointF(1.5, 2.5), QPointF(3.5, 4.5));
+
+    QVector<int> vec = {1, 2, 3};
+    QVector<int> vecEmpty;
 
     stopHere();
     return 0;

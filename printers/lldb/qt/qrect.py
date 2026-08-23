@@ -10,7 +10,9 @@ def qrect_summary(valobj, internal_dict):
     x2v = valobj.GetChildMemberWithName("x2")
     y2v = valobj.GetChildMemberWithName("y2")
     if not x1v.IsValid() or not y1v.IsValid() or not x2v.IsValid() or not y2v.IsValid():
-        return None
+        # LLDB renders a summary function's None return as the literal text
+        # "None" rather than falling back to the default struct display.
+        return ""
     x1 = _common.checked_int(x1v)
     y1 = _common.checked_int(y1v)
     x2 = _common.checked_int(x2v)

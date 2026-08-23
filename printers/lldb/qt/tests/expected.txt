@@ -17,3 +17,9 @@
 (QLine) ln = QLine(QPoint(1,2),QPoint(3,4))
 (QLine) lnZero = QLine(QPoint(0,0),QPoint(0,0))
 (QLineF) lnf = QLineF(QPointF(1.5,2.5),QPointF(3.5,4.5))
+(QVector) vec = QVector<int> (size = 3) {
+  [0] = 1
+  [1] = 2
+  [2] = 3
+}
+(QVector) vecEmpty = QVector<int> (size = 0) {}

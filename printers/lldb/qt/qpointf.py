@@ -16,7 +16,10 @@ def format_value(valobj):
 
 
 def qpointf_summary(valobj, internal_dict):
-    return format_value(valobj)
+    # LLDB renders a summary function's None return as the literal text
+    # "None" rather than falling back to the default struct display, so an
+    # unrecognised layout must produce "" instead.
+    return format_value(valobj) or ""
 
 
 def register(debugger, category):

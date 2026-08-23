@@ -10,7 +10,9 @@ def qrectf_summary(valobj, internal_dict):
     w = valobj.GetChildMemberWithName("w")
     h = valobj.GetChildMemberWithName("h")
     if not x.IsValid() or not y.IsValid() or not w.IsValid() or not h.IsValid():
-        return None
+        # LLDB renders a summary function's None return as the literal text
+        # "None" rather than falling back to the default struct display.
+        return ""
     # same output as QDebug operator<<(QRectF): unlike QRect this stores
     # width/height directly rather than a second corner.
     return "QRectF(%g,%g %gx%g)" % (

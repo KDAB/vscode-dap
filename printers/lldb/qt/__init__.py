@@ -14,10 +14,11 @@ from . import qrect
 from . import qrectf
 from . import qsize
 from . import qsizef
+from . import qvector
 
 CATEGORY = "kdab-qt"
 
-_MODULES = (qpoint, qpointf, qsize, qsizef, qrect, qrectf, qline, qlinef)
+_MODULES = (qpoint, qpointf, qsize, qsizef, qrect, qrectf, qline, qlinef, qvector)
 
 
 def __lldb_init_module(debugger, internal_dict):

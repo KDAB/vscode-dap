@@ -20,6 +20,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QSize`, `QSizeF`
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
+- `QVector`
 
 ## Adding a type
 
@@ -65,6 +66,31 @@ Before writing step 4, find the exact string format to match:
 
 No changes to `tests/build.sh`, `tests/CMakeLists.txt`, `test-printers.sh`, or the
 `.github/workflows/test-printers.yml` workflow should ever be needed for a new type.
+
+**A summary function must never `return None`.** LLDB renders that as the literal text `None`
+instead of falling back to the default struct display — return `""` for "couldn't format this,
+fall back". This applies to every `<type>_summary` function actually registered with `type summary
+add`; a shared helper like `qpoint.py`'s `format_value()` may still return `None` internally as
+long as its caller converts that to `""` before returning (see `qpoint_summary`).
+
+**Containers (e.g. `QVector`) are a different shape from the value types above** — see
+`qvector.py`. They need a `type synthetic add` children provider (a class with `num_children()`,
+`get_child_index()`, `get_child_at_index()`, `update()`) in addition to the summary, registered
+under the same regex, so the value can be expanded to see its elements. Two things bite here:
+
+- Once a synthetic provider is registered for a type, the `valobj` a plain summary *function*
+  receives becomes the synthetic (index-based) view, not the real one — call
+  `valobj.GetNonSyntheticValue()` first to reach the real members. The synthetic provider class
+  itself does *not* need this; it's always handed the real value.
+- `type summary add` hides children by default once a summary is registered; pass `-e` to keep
+  them visible (that's what makes `frame variable` show both `QVector<int> (size = 3)` and the
+  expanded `[0]`/`[1]`/`[2]` block).
+
+Also, in Qt6 `QVector<T>` is literally `using QVector = QList<T>;` (no distinct ABI type at all),
+and compilers disagree on what type name they leave in the debug info for such an alias: gcc
+reports the bare typedef name (`QVector`, no template argument), clang reports the canonical name
+(`QVector<int>`). `qvector.py`'s regex (`^QVector(<.*>)?$`) matches both; check this if a future
+alias-template type (there may be others) behaves unexpectedly on one toolchain but not the other.
 
 ## Testing
 
