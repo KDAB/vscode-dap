@@ -3,6 +3,7 @@
 
 import * as vscode from "vscode";
 
+import { buildAdapterEnvironment } from "./adapterEnvironment";
 import { DebuggerBackend, isBackendError } from "./debuggers/backend";
 import { expandTilde, isExecutable, resolveExecutablePath } from "./paths";
 import { parseSessionOptions } from "./sessionOptions";
@@ -79,17 +80,11 @@ export class DapDescriptorFactory
       );
     }
 
-    // kdap.environment is the user's escape hatch; anything the backend
-    // derived from a more specific setting takes precedence over it.
-    const env = { ...options.environment, ...command.env };
-    const executableOptions =
-      Object.keys(env).length !== 0 ? { env } : undefined;
+    const env = buildAdapterEnvironment(options, command.env);
 
-    return new vscode.DebugAdapterExecutable(
-      binaryPath,
-      [...command.args],
-      executableOptions,
-    );
+    return new vscode.DebugAdapterExecutable(binaryPath, [...command.args], {
+      env,
+    });
   }
 
   private async resolveBinaryPath(
