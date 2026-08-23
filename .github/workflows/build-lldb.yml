@@ -51,7 +51,11 @@ jobs:
       - name: test
         env:
           KDAP_TEST_DAP_LOG_DIR: ${{ runner.temp }}/dap-logs
-          DEBUGINFOD_URLS: ""
+          # DEBUGINFOD_URLS="" alone isn't enough here: something between
+          # this step and the adapter process re-sets it before the adapter
+          # actually spawns. This tells the extension itself to disable
+          # debuginfod rather than trust whatever it inherits.
+          KDAB_DAP_DISABLE_DEBUGINFOD: "1"
         run: |
           mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
           xvfb-run -a ./test.sh --lldb

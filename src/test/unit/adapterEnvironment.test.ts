@@ -102,6 +102,35 @@ suite("buildAdapterEnvironment", () => {
     );
   });
 
+  test("KDAB_DAP_DISABLE_DEBUGINFOD overrides a value already in the host environment", () => {
+    // e.g. a CI job's own DEBUGINFOD_URLS="" that gets re-set to something
+    // else before the adapter process actually spawns: this stops the host
+    // environment's value from being trusted at all.
+    const hostEnv = {
+      DEBUGINFOD_URLS: "https://example.invalid",
+      KDAB_DAP_DISABLE_DEBUGINFOD: "1",
+    };
+    assert.deepStrictEqual(
+      buildAdapterEnvironment(noOptions, undefined, hostEnv),
+      { DEBUGINFOD_URLS: "" },
+    );
+  });
+
+  test("KDAB_DAP_DISABLE_DEBUGINFOD does not override kdap.environment", () => {
+    const options = {
+      ...noOptions,
+      environment: { DEBUGINFOD_URLS: "https://from-settings.invalid" },
+    };
+    const hostEnv = {
+      DEBUGINFOD_URLS: "https://from-shell.invalid",
+      KDAB_DAP_DISABLE_DEBUGINFOD: "1",
+    };
+    assert.deepStrictEqual(
+      buildAdapterEnvironment(options, undefined, hostEnv),
+      { DEBUGINFOD_URLS: "https://from-settings.invalid" },
+    );
+  });
+
   test("defaults to the real process environment when none is given", () => {
     // Exercises the production code path: whatever this test process's own
     // DEBUGINFOD_URLS happens to be doesn't matter, only that omitting the
