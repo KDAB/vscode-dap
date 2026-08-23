@@ -51,6 +51,7 @@ jobs:
       - name: test
         env:
           KDAP_TEST_DAP_LOG_DIR: ${{ runner.temp }}/dap-logs
+          DEBUGINFOD_URLS: ""
         run: |
           mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
           xvfb-run -a ./test.sh --lldb
