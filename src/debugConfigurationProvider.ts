@@ -3,6 +3,8 @@
 
 import * as vscode from "vscode";
 
+import { readSettings } from "./settings";
+
 /** Drops the `undefined` values `NodeJS.ProcessEnv` allows but DAP's "env" doesn't. */
 function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   const result: Record<string, string> = {};
@@ -44,13 +46,9 @@ export class GDBDapConfigurationProvider
 
     // The environment the inferior would have inherited: gdb's own, which is
     // what GDBDapDescriptorFactory launches it with.
-    const environment = vscode.workspace
-      .getConfiguration("kdap", folder)
-      .get<{ [key: string]: string }>("environment");
-
     debugConfiguration["env"] = {
       ...toStringEnv(process.env),
-      ...environment,
+      ...readSettings(folder).environment,
       ...env,
     };
     return debugConfiguration;

@@ -7,13 +7,13 @@ import * as vscode from "vscode";
 
 import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
 import {
-  expandConfigPath,
   expandTilde,
   findExecutableInPath,
   isDirectory,
   isExecutable,
   resolveExecutablePath,
 } from "./paths";
+import { KdapSettings, readSettings } from "./settings";
 
 const execFileAsync = promisify(execFile);
 
@@ -58,6 +58,7 @@ export async function getGdbVersion(
 
 async function getDebuggerPath(
   session: vscode.DebugSession,
+  settings: KdapSettings,
 ): Promise<string | undefined> {
   // Explicit path in the launch configuration takes priority.
   const launchConfigPath: unknown = session.configuration["debuggerPath"];
@@ -67,15 +68,8 @@ async function getDebuggerPath(
   }
 
   // Then the extension's own setting.
-  const config = vscode.workspace.getConfiguration(
-    "kdap",
-    session.workspaceFolder,
-  );
-  const configPath = config.get<string>("debuggerPath");
-  if (configPath && configPath.length !== 0) {
-    return resolveExecutablePath(
-      expandConfigPath(configPath, session.workspaceFolder?.uri.fsPath),
-    );
+  if (settings.debuggerPath) {
+    return resolveExecutablePath(settings.debuggerPath);
   }
 
   // Fall back to searching PATH.
@@ -97,7 +91,9 @@ export class GDBDapDescriptorFactory
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession,
   ): Promise<vscode.DebugAdapterDescriptor | undefined> {
-    const debuggerPath = await getDebuggerPath(session);
+    const settings = readSettings(session.workspaceFolder);
+
+    const debuggerPath = await getDebuggerPath(session, settings);
     if (!debuggerPath || !(await isExecutable(debuggerPath))) {
       await GDBDapDescriptorFactory.showGdbNotFoundMessage(debuggerPath);
       return undefined;
@@ -111,11 +107,6 @@ export class GDBDapDescriptorFactory
       );
       return undefined;
     }
-
-    const config = vscode.workspace.getConfiguration(
-      "kdap",
-      session.workspaceFolder,
-    );
 
     const args: string[] = ["-q", "-i", "dap"];
 
@@ -146,28 +137,23 @@ export class GDBDapDescriptorFactory
       }
     }
 
-    const logPath = config.get<string>("logPath");
-    if (logPath) {
-      args.push(
-        "-iex",
-        `set debug dap-log-file ${expandConfigPath(logPath, session.workspaceFolder?.uri.fsPath)}`,
-      );
+    if (settings.logPath) {
+      args.push("-iex", `set debug dap-log-file ${settings.logPath}`);
+      if (settings.logLevel !== undefined) {
+        args.push("-iex", `set debug dap-log-level ${settings.logLevel}`);
+      }
     }
 
-    const logLevel = config.get<number>("logLevel");
-    if (logPath && logLevel !== undefined) {
-      args.push("-iex", `set debug dap-log-level ${logLevel}`);
-    }
-
-    if (config.get<boolean>("qtPrettyPrinters")) {
+    if (settings.qtPrettyPrinters) {
       args.push(...(await getQtPrettyPrintersArgs(this.context)));
     }
 
     // VS Code merges this into the extension host's own environment, so gdb
     // ends up with `process.env` plus these. GDBDapConfigurationProvider
     // relies on that when it works out what the inferior inherits.
-    const environment = config.get<{ [key: string]: string }>("environment");
-    const options = environment ? { env: { ...environment } } : undefined;
+    const options = settings.environment
+      ? { env: { ...settings.environment } }
+      : undefined;
 
     return new vscode.DebugAdapterExecutable(debuggerPath, args, options);
   }
