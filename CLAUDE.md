@@ -98,8 +98,9 @@ vscode dependency, which is where the logic lives and where the unit tests reach
 - **pre-commit** (`.pre-commit-config.yaml`) only enforces conventional commit messages and
   runs codespell.
 - **GitHub Actions** enforces ESLint and Prettier on every PR and push (`.github/workflows/lints.yml`)
-- CI (`.github/workflows/build.yml`) is Linux-only, and installs both gdb and lldb so the
-  integration suite runs against both.
+- CI is Linux-only and split by debugger: `.github/workflows/build-gdb.yml` installs only gdb
+  and runs `./test.sh --gdb`, `.github/workflows/build-lldb.yml` installs only lldb and runs
+  `./test.sh --lldb`.
 
 ## Conventions
 

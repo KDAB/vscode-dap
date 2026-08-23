@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: MIT
+
+# CI that builds this vscode extension and runs its integration tests against lldb-dap only.
+# Linux-only by design.
+
+name: build-lldb
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: |
+          npm install --loglevel verbose
+          npm install @vscode/vsce typescript -g
+
+      - name: Install LLDB and gcc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lldb gcc
+
+      - name: Check lldb-dap version
+        run: |
+          # lldb-dap --version prints nothing, so report lldb's instead.
+          lldb --version
+          # Ubuntu ships lldb-dap-<version> rather than a plain lldb-dap.
+          ls /usr/bin/lldb-dap*
+
+      - name: compile
+        run: npm run compile
+
+      - name: test
+        run: xvfb-run -a ./test.sh --lldb
+
+      - name: vsce package
+        run: vsce package

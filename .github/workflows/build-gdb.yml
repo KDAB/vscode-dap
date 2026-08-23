@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
 
-# CI that builds this vscode extension. Linux-only by design.
+# CI that builds this vscode extension and runs its integration tests against gdb only.
+# Linux-only by design.
 
-name: build
+name: build-gdb
 
 on:
   pull_request:
@@ -29,24 +30,19 @@ jobs:
           npm install --loglevel verbose
           npm install @vscode/vsce typescript -g
 
-      - name: Install GDB, LLDB and gcc
+      - name: Install GDB and gcc
         run: |
           sudo apt-get update
-          sudo apt-get install -y gdb lldb gcc
+          sudo apt-get install -y gdb gcc
 
-      - name: Check debugger versions
-        run: |
-          gdb --version
-          # lldb-dap --version prints nothing, so report lldb's instead.
-          lldb --version
-          # Ubuntu ships lldb-dap-<version> rather than a plain lldb-dap.
-          ls /usr/bin/lldb-dap*
+      - name: Check GDB version
+        run: gdb --version
 
       - name: compile
         run: npm run compile
 
       - name: test
-        run: xvfb-run -a npm test
+        run: xvfb-run -a ./test.sh --gdb
 
       - name: vsce package
         run: vsce package
