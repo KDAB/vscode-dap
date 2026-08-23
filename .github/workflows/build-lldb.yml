@@ -55,6 +55,24 @@ jobs:
           mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
           xvfb-run -a ./test.sh --lldb
 
+      - name: Dump process state on failure
+        if: failure()
+        # A previous run left the debuggee (and lldb-dap/lldb-server) alive and
+        # untouched at job cleanup, meaning a session started and something got
+        # stuck before ever disconnecting. This is the evidence for exactly
+        # what was still alive, its parentage, and (from /proc/<pid>/status)
+        # whether it's genuinely blocked in a ptrace stop or something else.
+        run: |
+          set +e
+          ps -eo pid,ppid,stat,wchan:32,cmd --forest
+          echo "---"
+          for pid in $(pgrep -f 'lldb-dap|lldb-server|/hello$'); do
+            echo "=== /proc/$pid/status ==="
+            grep -E '^(Name|State|PPid|Tracer)' "/proc/$pid/status" 2>/dev/null
+          done
+          echo "---"
+          sudo ss -tlnp 2>&1 || ss -tln 2>&1
+
       - name: Upload DAP logs
         if: always()
         uses: actions/upload-artifact@v4
