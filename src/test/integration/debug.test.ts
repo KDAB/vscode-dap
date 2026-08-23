@@ -4,8 +4,8 @@
 import { defineDebugSuite } from "./debugSuite";
 import { enabledTestDebuggers } from "./debuggers";
 
-// One VS Code instance, one suite per debugger. See debuggers.ts for how to
-// narrow the list down.
+// One VS Code instance, one suite per debugger in the extension's registry.
+// See debuggers.ts for how to narrow the list down.
 for (const target of enabledTestDebuggers()) {
   defineDebugSuite(target);
 }

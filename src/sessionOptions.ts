@@ -36,6 +36,8 @@ export interface SessionOptions {
   /** Only meaningful when `logPath` is set. */
   readonly logLevel: number | undefined;
   readonly qtPrettyPrinters: boolean;
+  /** Extra environment variables for the debugger process itself. */
+  readonly environment: Readonly<Record<string, string>> | undefined;
 }
 
 /** Reads a string property, treating an empty or non-string value as absent. */
@@ -74,5 +76,6 @@ export function parseSessionOptions(
     logPath: settings.logPath,
     logLevel: settings.logLevel,
     qtPrettyPrinters: settings.qtPrettyPrinters,
+    environment: settings.environment,
   };
 }

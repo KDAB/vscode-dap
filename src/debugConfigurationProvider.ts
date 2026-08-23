@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 
 import { DebuggerBackend } from "./debuggers/backend";
+import { parseSessionOptions } from "./sessionOptions";
 import { readSettings } from "./settings";
 
 /**
@@ -24,9 +25,10 @@ export class DapConfigurationProvider
     folder: vscode.WorkspaceFolder | undefined,
     debugConfiguration: vscode.DebugConfiguration,
   ): vscode.DebugConfiguration {
+    const settings = readSettings(folder, this.backend.id);
     return this.backend.resolveConfiguration(
       debugConfiguration,
-      readSettings(folder, this.backend.id),
+      parseSessionOptions(debugConfiguration, settings),
     );
   }
 }

@@ -7,8 +7,7 @@ import * as fs from "node:fs/promises";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { findExecutableInPath } from "../../paths";
-import { TestDebugger } from "./debuggers";
+import { DebuggerBackend } from "../../debuggers/backend";
 
 const fixtureDir = path.join(__dirname, "..", "..", "..", "test", "fixtures");
 const sourcePath = path.join(fixtureDir, "hello.c");
@@ -78,15 +77,12 @@ async function disconnectAndWait(session: vscode.DebugSession): Promise<void> {
  * behind it, so the assertions are the same for all of them: making them hold
  * on a new debugger is the extension's job, not the test's.
  */
-export function defineDebugSuite(target: TestDebugger) {
+export function defineDebugSuite(target: DebuggerBackend) {
   suite(`Debugging with ${target.displayName}`, () => {
     suiteSetup(async function () {
       this.timeout(30000);
 
-      const found = await Promise.all(
-        target.binaryNames.map((name) => findExecutableInPath(name)),
-      );
-      if (!found.some(Boolean)) {
+      if (!(await target.findBinaryInPath())) {
         this.skip();
       }
 

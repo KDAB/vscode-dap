@@ -4,13 +4,7 @@
 import * as vscode from "vscode";
 
 import { DebuggerBackend, isBackendError } from "./debuggers/backend";
-import {
-  expandTilde,
-  findExecutableInPath,
-  isDirectory,
-  isExecutable,
-  resolveExecutablePath,
-} from "./paths";
+import { expandTilde, isExecutable, resolveExecutablePath } from "./paths";
 import { parseSessionOptions } from "./sessionOptions";
 import { KdapSettings, readSettings } from "./settings";
 
@@ -70,13 +64,6 @@ export class DapDescriptorFactory
 
     const options = parseSessionOptions(session.configuration, settings);
 
-    if (options.sysroot && !(await isDirectory(options.sysroot))) {
-      await vscode.window.showErrorMessage(
-        `sysroot path '${options.sysroot}' is not an existing folder.`,
-      );
-      return undefined;
-    }
-
     const command = await this.backend.adapterCommand(options, {
       extensionContext: this.context,
     });
@@ -87,7 +74,7 @@ export class DapDescriptorFactory
 
     // kdap.environment is the user's escape hatch; anything the backend
     // derived from a more specific setting takes precedence over it.
-    const env = { ...settings.environment, ...command.env };
+    const env = { ...options.environment, ...command.env };
     const executableOptions =
       Object.keys(env).length !== 0 ? { env } : undefined;
 
@@ -114,14 +101,8 @@ export class DapDescriptorFactory
       return resolveExecutablePath(settings.debuggerPath);
     }
 
-    // Fall back to searching PATH, preferring the earlier candidates.
-    for (const name of this.backend.binaryNames) {
-      const found = await findExecutableInPath(name);
-      if (found) {
-        return found;
-      }
-    }
-    return undefined;
+    // Fall back to however this debugger's binary is normally named.
+    return this.backend.findBinaryInPath();
   }
 
   private async showBinaryNotFoundMessage(binaryPath?: string) {

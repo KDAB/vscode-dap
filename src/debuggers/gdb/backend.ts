@@ -3,9 +3,14 @@
 
 import * as vscode from "vscode";
 
+import { findExecutableInPath, isDirectory } from "../../paths";
 import { SessionOptions } from "../../sessionOptions";
-import { KdapSettings } from "../../settings";
-import { AdapterCommand, BackendContext, DebuggerBackend } from "../backend";
+import {
+  AdapterCommand,
+  BackendContext,
+  BackendError,
+  DebuggerBackend,
+} from "../backend";
 import { buildGdbArgs } from "./arguments";
 import { getQtPrettyPrintersArgs } from "./prettyPrinters";
 import {
@@ -35,9 +40,12 @@ export class GdbBackend implements DebuggerBackend {
   readonly id = "gdb";
   readonly displayName = "gdb";
   readonly debugType = "kdap";
-  readonly binaryNames = ["gdb"];
   readonly pathSettingKey = "kdap.gdb.path";
   readonly installHint = `Install GDB ${MIN_MAJOR}.${MIN_MINOR} or later`;
+
+  findBinaryInPath(): Promise<string | undefined> {
+    return findExecutableInPath("gdb");
+  }
 
   async checkBinary(binaryPath: string): Promise<string | undefined> {
     const version = await getGdbVersion(binaryPath);
@@ -53,7 +61,16 @@ export class GdbBackend implements DebuggerBackend {
   async adapterCommand(
     options: SessionOptions,
     context: BackendContext,
-  ): Promise<AdapterCommand> {
+  ): Promise<AdapterCommand | BackendError> {
+    // Checked here rather than in the factory because "set sysroot" is gdb's
+    // way of honouring it; a debugger that ignores sysroot has no business
+    // refusing to start over one.
+    if (options.sysroot && !(await isDirectory(options.sysroot))) {
+      return {
+        message: `sysroot path '${options.sysroot}' is not an existing folder.`,
+      };
+    }
+
     // Obtaining these may prompt the user to download them first, which is why
     // buildGdbArgs() takes them rather than deriving them.
     const prettyPrinterArgs = options.qtPrettyPrinters
@@ -76,7 +93,7 @@ export class GdbBackend implements DebuggerBackend {
    */
   resolveConfiguration(
     config: vscode.DebugConfiguration,
-    settings: KdapSettings,
+    options: SessionOptions,
   ): vscode.DebugConfiguration {
     const env: unknown = config["env"];
     if (typeof env !== "object" || env === null) {
@@ -88,7 +105,7 @@ export class GdbBackend implements DebuggerBackend {
     // what the descriptor factory launches it with.
     config["env"] = {
       ...toStringEnv(process.env),
-      ...settings.environment,
+      ...options.environment,
       ...env,
     };
     return config;

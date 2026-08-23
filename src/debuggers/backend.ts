@@ -4,7 +4,6 @@
 import * as vscode from "vscode";
 
 import { SessionOptions } from "../sessionOptions";
-import { KdapSettings } from "../settings";
 
 /** How to spawn a debug adapter, minus the binary itself. */
 export interface AdapterCommand {
@@ -49,12 +48,16 @@ export interface DebuggerBackend {
   readonly displayName: string;
   /** The debug type this backend is registered for, as contributed in package.json. */
   readonly debugType: string;
-  /** Candidate binary names to look for in PATH, most preferred first. */
-  readonly binaryNames: readonly string[];
   /** The setting the user is pointed at when the binary is missing or unusable. */
   readonly pathSettingKey: string;
   /** What to do about a missing binary, e.g. "Install GDB 16.1 or later". */
   readonly installHint: string;
+
+  /**
+   * Finds this debugger's binary in PATH. Each debugger knows how its binary
+   * is named, which is not always one fixed name.
+   */
+  findBinaryInPath(): Promise<string | undefined>;
 
   /**
    * Checks that a binary can actually serve as this debug adapter. Returns a
@@ -78,7 +81,7 @@ export interface DebuggerBackend {
    */
   resolveConfiguration(
     config: vscode.DebugConfiguration,
-    settings: KdapSettings,
+    options: SessionOptions,
   ): vscode.DebugConfiguration;
 }
 

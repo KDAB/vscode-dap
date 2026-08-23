@@ -33,6 +33,7 @@ suite("parseSessionOptions", () => {
       logPath: undefined,
       logLevel: undefined,
       qtPrettyPrinters: false,
+      environment: undefined,
     });
   });
 

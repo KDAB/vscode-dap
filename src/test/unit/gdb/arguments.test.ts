@@ -13,6 +13,7 @@ const noOptions: SessionOptions = {
   logPath: undefined,
   logLevel: undefined,
   qtPrettyPrinters: false,
+  environment: undefined,
 };
 
 function build(
