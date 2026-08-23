@@ -4,6 +4,7 @@ node_modules
 .vscode-test/
 *.vsix
 test/fixtures/hello
+test/fixtures/hello-remapped
 
 # test/cpp_test CMake build artifacts
 test/cpp_test/build-dev
