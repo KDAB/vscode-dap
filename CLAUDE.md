@@ -40,7 +40,7 @@ npm run compile              # Compile TypeScript to JavaScript
   `vscode.DebugAdapterDescriptorFactory` and `GDBDapConfigurationProvider` as the
   `vscode.DebugConfigurationProvider` for the `kdap` debugger type.
 - `src/debugAdapterFactory.ts` — resolves which `gdb` binary to launch (launch config's
-  `gdbPath` > `kdap.gdbPath` setting > `PATH` lookup) and builds the `gdb -i dap` command line,
+  `debuggerPath` > `kdap.debuggerPath` setting > `PATH` lookup) and builds the `gdb -i dap` command line,
   including optional DAP logging flags.
 - `src/debugConfigurationProvider.ts` — rewrites a launch configuration's `env` so it merges
   into the inherited environment instead of replacing it, working around gdb's `inf.clear_env()`

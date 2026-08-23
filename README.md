@@ -30,8 +30,8 @@ when adding a new configuration.
 
 ## Launch configuration
 
-- `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
-  `kdap.gdbPath` setting.
+- `debuggerPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
+  `kdap.debuggerPath` setting.
 - `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
   info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
@@ -48,8 +48,8 @@ when adding a new configuration.
 
 ## Attach configuration
 
-- `gdbPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
-  `kdap.gdbPath` setting.
+- `debuggerPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
+  `kdap.debuggerPath` setting.
 - `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
   info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
 - `pid`: The process ID to which gdb should attach.
@@ -59,7 +59,7 @@ when adding a new configuration.
 
 ## Settings
 
-- `kdap.gdbPath`: Path to the gdb binary. Defaults to searching `PATH`.
+- `kdap.debuggerPath`: Path to the gdb binary. Defaults to searching `PATH`.
 - `kdap.logPath`: Enable DAP logging to this file.
 - `kdap.logLevel`: DAP logging verbosity (default `1`).
 - `kdap.environment`: Extra environment variables set on the gdb process itself.

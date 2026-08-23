@@ -23,7 +23,7 @@ export const MIN_GDB_VERSION: readonly [number, number] = [16, 1];
 /**
  * Whether `filePath` is a regular file the current user can execute. The
  * `isFile()` check matters because `X_OK` also succeeds on any directory with
- * search permission, so pointing `kdap.gdbPath` at a bin directory instead of
+ * search permission, so pointing `kdap.debuggerPath` at a bin directory instead of
  * the gdb binary would otherwise only fail later, when gdb is run.
  */
 export async function isExecutable(filePath: string): Promise<boolean> {
@@ -69,10 +69,10 @@ export function isGdbVersionSufficient(
 
 /** Runs `gdb --version` and parses the result. Returns undefined if gdb can't be run or its version can't be parsed. */
 export async function getGdbVersion(
-  gdbPath: string,
+  debuggerPath: string,
 ): Promise<[number, number] | undefined> {
   try {
-    const { stdout } = await execFileAsync(gdbPath, ["--version"]);
+    const { stdout } = await execFileAsync(debuggerPath, ["--version"]);
     return parseGdbVersion(stdout);
   } catch {
     return undefined;
@@ -126,21 +126,21 @@ async function findExecutableInPath(name: string): Promise<string | undefined> {
  * `fs.access`, so look it up ourselves. Values containing a path separator
  * are left untouched.
  */
-async function resolveGdbPath(value: string): Promise<string> {
+async function resolveDebuggerPath(value: string): Promise<string> {
   if (value.includes(path.sep)) {
     return value;
   }
   return (await findExecutableInPath(value)) ?? value;
 }
 
-async function getGdbPath(
+async function getDebuggerPath(
   session: vscode.DebugSession,
 ): Promise<string | undefined> {
   // Explicit path in the launch configuration takes priority.
-  const launchConfigPath: unknown = session.configuration["gdbPath"];
+  const launchConfigPath: unknown = session.configuration["debuggerPath"];
   if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
     // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
-    return resolveGdbPath(expandTilde(launchConfigPath));
+    return resolveDebuggerPath(expandTilde(launchConfigPath));
   }
 
   // Then the extension's own setting.
@@ -148,9 +148,9 @@ async function getGdbPath(
     "kdap",
     session.workspaceFolder,
   );
-  const configPath = config.get<string>("gdbPath");
+  const configPath = config.get<string>("debuggerPath");
   if (configPath && configPath.length !== 0) {
-    return resolveGdbPath(
+    return resolveDebuggerPath(
       expandConfigPath(configPath, session.workspaceFolder),
     );
   }
@@ -174,16 +174,16 @@ export class GDBDapDescriptorFactory
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession,
   ): Promise<vscode.DebugAdapterDescriptor | undefined> {
-    const gdbPath = await getGdbPath(session);
-    if (!gdbPath || !(await isExecutable(gdbPath))) {
-      await GDBDapDescriptorFactory.showGdbNotFoundMessage(gdbPath);
+    const debuggerPath = await getDebuggerPath(session);
+    if (!debuggerPath || !(await isExecutable(debuggerPath))) {
+      await GDBDapDescriptorFactory.showGdbNotFoundMessage(debuggerPath);
       return undefined;
     }
 
-    const version = await getGdbVersion(gdbPath);
+    const version = await getGdbVersion(debuggerPath);
     if (!version || !isGdbVersionSufficient(version)) {
       await GDBDapDescriptorFactory.showGdbVersionTooOldMessage(
-        gdbPath,
+        debuggerPath,
         version,
       );
       return undefined;
@@ -246,14 +246,14 @@ export class GDBDapDescriptorFactory
     const environment = config.get<{ [key: string]: string }>("environment");
     const options = environment ? { env: { ...environment } } : undefined;
 
-    return new vscode.DebugAdapterExecutable(gdbPath, args, options);
+    return new vscode.DebugAdapterExecutable(debuggerPath, args, options);
   }
 
   /** Shows a message box when the gdb executable can't be found. */
-  static async showGdbNotFoundMessage(gdbPath?: string) {
-    const message = gdbPath
-      ? `gdb path '${gdbPath}' is not a valid executable.`
-      : `Unable to find gdb. Install GDB ${MIN_GDB_VERSION[0]}.${MIN_GDB_VERSION[1]} or later, or set kdap.gdbPath.`;
+  static async showGdbNotFoundMessage(debuggerPath?: string) {
+    const message = debuggerPath
+      ? `gdb path '${debuggerPath}' is not a valid executable.`
+      : `Unable to find gdb. Install GDB ${MIN_GDB_VERSION[0]}.${MIN_GDB_VERSION[1]} or later, or set kdap.debuggerPath.`;
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,
@@ -263,7 +263,7 @@ export class GDBDapDescriptorFactory
     if (choice === openSettingsAction) {
       await vscode.commands.executeCommand(
         "workbench.action.openSettings",
-        "kdap.gdbPath",
+        "kdap.debuggerPath",
       );
     }
   }
@@ -277,13 +277,13 @@ export class GDBDapDescriptorFactory
 
   /** Shows a message box when the gdb executable's version is too old, or couldn't be determined. */
   static async showGdbVersionTooOldMessage(
-    gdbPath: string,
+    debuggerPath: string,
     version: [number, number] | undefined,
   ) {
     const [minMajor, minMinor] = MIN_GDB_VERSION;
     const message = version
-      ? `gdb at '${gdbPath}' is version ${version[0]}.${version[1]}, but this extension requires ${minMajor}.${minMinor} or later.`
-      : `Unable to determine the version of gdb at '${gdbPath}'. This extension requires gdb ${minMajor}.${minMinor} or later.`;
+      ? `gdb at '${debuggerPath}' is version ${version[0]}.${version[1]}, but this extension requires ${minMajor}.${minMinor} or later.`
+      : `Unable to determine the version of gdb at '${debuggerPath}'. This extension requires gdb ${minMajor}.${minMinor} or later.`;
     const openSettingsAction = "Open Settings";
     const choice = await vscode.window.showErrorMessage(
       message,
@@ -293,7 +293,7 @@ export class GDBDapDescriptorFactory
     if (choice === openSettingsAction) {
       await vscode.commands.executeCommand(
         "workbench.action.openSettings",
-        "kdap.gdbPath",
+        "kdap.debuggerPath",
       );
     }
   }

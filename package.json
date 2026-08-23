@@ -68,7 +68,7 @@
       "type": "object",
       "title": "GDB DAP",
       "properties": {
-        "kdap.gdbPath": {
+        "kdap.debuggerPath": {
           "scope": "resource",
           "type": "string",
           "description": "The path to the gdb binary. Defaults to searching for 'gdb' in PATH."
@@ -170,7 +170,7 @@
               "program"
             ],
             "properties": {
-              "gdbPath": {
+              "debuggerPath": {
                 "type": "string",
                 "markdownDescription": "The path to the gdb executable to use."
               },
@@ -221,7 +221,7 @@
           },
           "attach": {
             "properties": {
-              "gdbPath": {
+              "debuggerPath": {
                 "type": "string",
                 "markdownDescription": "The path to the gdb executable to use."
               },
