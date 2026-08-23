@@ -2,7 +2,7 @@
   "name": "gdb-dap",
   "displayName": "GDB DAP",
   "description": "Debug C/C++ programs using GDB's built-in Debug Adapter Protocol support",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "KDAB",
   "repository": {
     "type": "git",

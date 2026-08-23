@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/KDAB/vscode-gdb-dap/compare/v1.1.0...v1.2.0) (2026-08-23)
+
+
+### Features
+
+* Add Load Core File command ([3f6f1e7](https://github.com/KDAB/vscode-gdb-dap/commit/3f6f1e71eab1afeeb9899208b26d04710c1a3a54))
+* Add skipGdbinit launch config option ([f944fbe](https://github.com/KDAB/vscode-gdb-dap/commit/f944fbed97c3487e90e5e8c72fee59d62260e0b8))
+* Add sourceFileMap launch config option ([eea89b0](https://github.com/KDAB/vscode-gdb-dap/commit/eea89b01bfe7fc67d9bf206790c30e398af7e8db))
+* Add sysroot property to launch config ([07c4898](https://github.com/KDAB/vscode-gdb-dap/commit/07c4898a82148c6440013d6a7c45f73ad43a8b01))
+
 ## [1.1.0](https://github.com/KDAB/vscode-gdb-dap/compare/v1.0.0...v1.1.0) (2026-08-18)
 
 
