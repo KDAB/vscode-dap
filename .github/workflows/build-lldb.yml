@@ -30,7 +30,7 @@ jobs:
       - name: Install LLDB and gcc
         run: |
           sudo apt-get update
-          sudo apt-get install -y lldb gcc
+          sudo apt-get install -y lldb gcc gdb
 
       - name: Check lldb-dap version
         run: |
@@ -59,9 +59,14 @@ jobs:
         if: failure()
         # A previous run left the debuggee (and lldb-dap/lldb-server) alive and
         # untouched at job cleanup, meaning a session started and something got
-        # stuck before ever disconnecting. This is the evidence for exactly
-        # what was still alive, its parentage, and (from /proc/<pid>/status)
-        # whether it's genuinely blocked in a ptrace stop or something else.
+        # stuck before ever disconnecting. Every environmental angle checked so
+        # far (signals, DISPLAY, process group, CPU contention) has come back
+        # clean, so this goes one level deeper: an actual thread backtrace of
+        # the stuck lldb-dap/lldb-server, via gdb, showing what syscall or lock
+        # it's really blocked in - plus its open file descriptors, since
+        # lldb-server is launched with a fixed "--fd=N" for its GDB-remote
+        # channel to lldb-dap, and a wrong or already-repurposed fd there would
+        # explain silence on both ends without either side crashing.
         run: |
           set +e
           ps -eo pid,ppid,stat,wchan:32,cmd --forest
@@ -69,6 +74,16 @@ jobs:
           for pid in $(pgrep -f 'lldb-dap|lldb-server|/hello$'); do
             echo "=== /proc/$pid/status ==="
             grep -E '^(Name|State|PPid|Tracer)' "/proc/$pid/status" 2>/dev/null
+            echo "=== /proc/$pid/fd ==="
+            sudo ls -la "/proc/$pid/fd" 2>&1
+          done
+          echo "---"
+          for pid in $(pgrep -f 'lldb-dap|lldb-server-'); do
+            echo "=== gdb backtrace of $pid ==="
+            sudo gdb -p "$pid" --batch \
+              -ex "thread apply all bt" \
+              -ex "detach" \
+              -ex "quit" 2>&1
           done
           echo "---"
           sudo ss -tlnp 2>&1 || ss -tln 2>&1
