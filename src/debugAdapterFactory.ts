@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
 
+import { buildGdbArgs } from "./gdbArguments";
 import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
 import {
   expandTilde,
@@ -13,6 +14,7 @@ import {
   isExecutable,
   resolveExecutablePath,
 } from "./paths";
+import { parseSessionOptions } from "./sessionOptions";
 import { KdapSettings, readSettings } from "./settings";
 
 const execFileAsync = promisify(execFile);
@@ -108,54 +110,31 @@ export class GDBDapDescriptorFactory
       return undefined;
     }
 
-    const args: string[] = ["-q", "-i", "dap"];
+    const options = parseSessionOptions(session.configuration, settings);
 
-    if (session.configuration["skipGdbinit"] === true) {
-      args.push("-nx");
+    if (options.sysroot && !(await isDirectory(options.sysroot))) {
+      await GDBDapDescriptorFactory.showSysrootNotFoundMessage(options.sysroot);
+      return undefined;
     }
 
-    const sysroot: unknown = session.configuration["sysroot"];
-    if (typeof sysroot === "string" && sysroot.length !== 0) {
-      // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
-      const sysrootPath = expandTilde(sysroot);
-      if (!(await isDirectory(sysrootPath))) {
-        await GDBDapDescriptorFactory.showSysrootNotFoundMessage(sysrootPath);
-        return undefined;
-      }
-      args.push("-iex", `set sysroot ${sysrootPath}`);
-    }
+    const prettyPrinterArgs = options.qtPrettyPrinters
+      ? await getQtPrettyPrintersArgs(this.context)
+      : [];
 
-    const sourceFileMap: unknown = session.configuration["sourceFileMap"];
-    if (sourceFileMap && typeof sourceFileMap === "object") {
-      for (const [from, to] of Object.entries(
-        sourceFileMap as Record<string, unknown>,
-      )) {
-        if (typeof to === "string") {
-          // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
-          args.push("-iex", `set substitute-path ${from} ${expandTilde(to)}`);
-        }
-      }
-    }
-
-    if (settings.logPath) {
-      args.push("-iex", `set debug dap-log-file ${settings.logPath}`);
-      if (settings.logLevel !== undefined) {
-        args.push("-iex", `set debug dap-log-level ${settings.logLevel}`);
-      }
-    }
-
-    if (settings.qtPrettyPrinters) {
-      args.push(...(await getQtPrettyPrintersArgs(this.context)));
-    }
+    const args = buildGdbArgs(options, prettyPrinterArgs);
 
     // VS Code merges this into the extension host's own environment, so gdb
     // ends up with `process.env` plus these. GDBDapConfigurationProvider
     // relies on that when it works out what the inferior inherits.
-    const options = settings.environment
+    const executableOptions = settings.environment
       ? { env: { ...settings.environment } }
       : undefined;
 
-    return new vscode.DebugAdapterExecutable(debuggerPath, args, options);
+    return new vscode.DebugAdapterExecutable(
+      debuggerPath,
+      args,
+      executableOptions,
+    );
   }
 
   /** Shows a message box when the gdb executable can't be found. */
