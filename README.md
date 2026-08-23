@@ -1,4 +1,4 @@
-# GDB DAP
+# KDAB DAP
 
 A VS Code extension that debugs C/C++ programs using [GDB](https://sourceware.org/gdb/)'s
 built-in [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/) support
@@ -25,7 +25,7 @@ Create a launch configuration in `.vscode/launch.json`:
 }
 ```
 
-Or use the "GDB DAP: Launch" / "GDB DAP: Attach" / "GDB DAP: Load Core Dump" snippets offered
+Or use the "GDB: Launch" / "GDB: Attach" / "GDB: Load Core Dump" snippets offered
 when adding a new configuration.
 
 ## Launch configuration
@@ -69,12 +69,12 @@ when adding a new configuration.
 
 ## Commands
 
-- **GDB DAP: Download Qt Pretty Printers** — downloads the
+- **KDAB DAP: Download Qt Pretty Printers** — downloads the
   [KDevelop Qt gdb pretty-printer scripts](https://github.com/iamsergio/kdevelop/tree/vscode-gdb-dap/plugins/gdb/printers)
   into the extension's global storage. Run this once via the Command Palette to enable Qt
   pretty-printing (see `kdap.qtPrettyPrinters` above).
-- **GDB DAP: Debug with Args** — starts one of your `kdap` launch configurations, prompting for
+- **KDAB DAP: Debug with Args** — starts one of your `kdap` launch configurations, prompting for
   the arguments to pass to the inferior instead of using the configuration's `args`. The input
   is split like a shell splits a command line, so quote arguments containing spaces.
-- **GDB DAP: Run with Args** — the same, but without debugging: breakpoints and entry stops are
+- **KDAB DAP: Run with Args** — the same, but without debugging: breakpoints and entry stops are
   ignored.

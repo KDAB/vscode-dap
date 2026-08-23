@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GDB DAP is a VS Code extension that debugs C/C++ programs using GDB's built-in Debug Adapter
+KDAB DAP is a VS Code extension that debugs C/C++ programs using GDB's built-in Debug Adapter
 Protocol support (`gdb -i dap`). Unlike most debugger extensions, it doesn't implement any part
 of the DAP protocol itself — GDB already speaks DAP natively, so the extension's only job is to
 find a suitable `gdb` binary and hand it to VS Code as the debug adapter process.
@@ -45,7 +45,7 @@ npm run compile              # Compile TypeScript to JavaScript
 - `src/debugConfigurationProvider.ts` — rewrites a launch configuration's `env` so it merges
   into the inherited environment instead of replacing it, working around gdb's `inf.clear_env()`
   in `dap/launch.py`.
-- `src/gdbPrettyPrinters.ts` — implements the "GDB DAP: Download Qt Pretty Printers" command,
+- `src/gdbPrettyPrinters.ts` — implements the "KDAB DAP: Download Qt Pretty Printers" command,
   which fetches the KDevelop Qt gdb pretty-printer scripts into the extension's global storage
   for use when `kdap.qtPrettyPrinters` is enabled.
 

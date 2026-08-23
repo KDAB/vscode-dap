@@ -23,7 +23,7 @@ echo "Running build_package.sh..."
 
 cmake -S test/cpp_test/ --preset=dev && \
 cmake --build $CPP_BUILD_DIR/ && \
-code_clean --install-extension gdb-dap-*.vsix \
+code_clean --install-extension dap-*.vsix \
      --install-extension ms-vscode.cmake-tools && \
 code_clean test/cpp_test/vscode.code-workspace --crash-reporter-directory /tmp/ \
      --disable-workspace-trust

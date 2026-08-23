@@ -1,6 +1,6 @@
 {
-  "name": "gdb-dap",
-  "displayName": "GDB DAP",
+  "name": "dap",
+  "displayName": "KDAB DAP",
   "description": "Debug C/C++ programs using GDB's built-in Debug Adapter Protocol support",
   "version": "1.1.0",
   "publisher": "KDAB",
@@ -66,7 +66,7 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "GDB DAP",
+      "title": "KDAB DAP",
       "properties": {
         "kdap.debuggerPath": {
           "scope": "resource",
@@ -107,22 +107,22 @@
       {
         "command": "kdap.downloadQtPrettyPrinters",
         "title": "Download Qt Pretty Printers",
-        "category": "GDB DAP"
+        "category": "KDAB DAP"
       },
       {
         "command": "kdap.runWithArgs",
         "title": "Run with Args",
-        "category": "GDB DAP"
+        "category": "KDAB DAP"
       },
       {
         "command": "kdap.debugWithArgs",
         "title": "Debug with Args",
-        "category": "GDB DAP"
+        "category": "KDAB DAP"
       },
       {
         "command": "kdap.loadCoreFile",
         "title": "Load Core File",
-        "category": "GDB DAP"
+        "category": "KDAB DAP"
       }
     ],
     "menus": {
@@ -276,7 +276,7 @@
         ],
         "configurationSnippets": [
           {
-            "label": "GDB DAP: Launch",
+            "label": "GDB: Launch",
             "description": "Launch a program under gdb",
             "body": {
               "type": "kdap",
@@ -289,7 +289,7 @@
             }
           },
           {
-            "label": "GDB DAP: Attach",
+            "label": "GDB: Attach",
             "description": "Attach gdb to a running process",
             "body": {
               "type": "kdap",
@@ -299,7 +299,7 @@
             }
           },
           {
-            "label": "GDB DAP: Load Core Dump",
+            "label": "GDB: Load Core Dump",
             "description": "Load a core dump in gdb",
             "body": {
               "type": "kdap",

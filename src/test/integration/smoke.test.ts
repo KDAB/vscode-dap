@@ -5,7 +5,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 
 suite("Extension Smoke Tests", () => {
-  const extensionId = "KDAB.gdb-dap";
+  const extensionId = "KDAB.dap";
 
   test("extension is present", () => {
     const ext = vscode.extensions.getExtension(extensionId);

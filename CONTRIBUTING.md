@@ -5,7 +5,7 @@
 ```
 npm install
 vsce package
-code --install-extension gdb-dap-*.vsix
+code --install-extension dap-*.vsix
 ```
 
 ## Automatic tests
