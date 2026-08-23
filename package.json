@@ -366,6 +366,126 @@
                 "type": "boolean",
                 "description": "Stop at the program's entry point.",
                 "default": false
+              },
+              "initCommands": {
+                "type": "array",
+                "description": "lldb commands run once the debugger has been created, before the target exists. The place for 'platform select', pretty printer scripts, and anything else that must precede the target.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "preRunCommands": {
+                "type": "array",
+                "description": "lldb commands run after the target is created but before the program is launched or attached to.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "postRunCommands": {
+                "type": "array",
+                "description": "lldb commands run once the program has been launched or attached to.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "stopCommands": {
+                "type": "array",
+                "description": "lldb commands run each time the program stops.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "exitCommands": {
+                "type": "array",
+                "description": "lldb commands run once the program has exited.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "terminateCommands": {
+                "type": "array",
+                "description": "lldb commands run when the debug session ends.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "platformName": {
+                "type": "string",
+                "description": "The lldb platform to select, as if by 'platform select'. Needed for remote targets."
+              },
+              "targetTriple": {
+                "type": "string",
+                "description": "The target triple to debug for, overriding the one recorded in the executable."
+              },
+              "debuggerRoot": {
+                "type": "string",
+                "description": "Directory lldb-dap chdirs to before doing anything else, so that relative paths in commands resolve predictably."
+              },
+              "enableAutoVariableSummaries": {
+                "type": "boolean",
+                "description": "Show auto-generated summaries for variables when no language-specific summary applies.",
+                "default": false
+              },
+              "enableSyntheticChildDebugging": {
+                "type": "boolean",
+                "description": "Alongside a synthetic child, also show the raw value it was synthesised from.",
+                "default": false
+              },
+              "displayExtendedBacktrace": {
+                "type": "boolean",
+                "description": "Include extended backtraces, where the platform provides them.",
+                "default": false
+              },
+              "customFrameFormat": {
+                "type": "string",
+                "description": "Format string for stack frame names, using lldb's frame-format syntax."
+              },
+              "customThreadFormat": {
+                "type": "string",
+                "description": "Format string for thread names, using lldb's thread-format syntax."
+              },
+              "timeout": {
+                "type": "number",
+                "description": "Seconds to wait for launchCommands or attachCommands to establish a valid target."
+              },
+              "launchCommands": {
+                "type": "array",
+                "description": "lldb commands used to launch the program instead of lldb-dap doing it. The last of them must leave a valid, launched target.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "runInTerminal": {
+                "type": "boolean",
+                "description": "Launch the program in an integrated terminal, so that it can read from stdin.",
+                "default": false
+              },
+              "disableASLR": {
+                "type": "boolean",
+                "description": "Disable address space layout randomisation for the program.",
+                "default": true
+              },
+              "disableSTDIO": {
+                "type": "boolean",
+                "description": "Launch the program without stdin, stdout or stderr.",
+                "default": false
+              },
+              "shellExpandArguments": {
+                "type": "boolean",
+                "description": "Let a shell expand the program's arguments before launching it.",
+                "default": false
+              },
+              "detachOnError": {
+                "type": "boolean",
+                "description": "Detach from the program if an error is encountered while launching it.",
+                "default": false
               }
             }
           },
@@ -396,6 +516,106 @@
               "coreFile": {
                 "type": "string",
                 "description": "Path to a core dump file to load instead of attaching to a live process."
+              },
+              "initCommands": {
+                "type": "array",
+                "description": "lldb commands run once the debugger has been created, before the target exists. The place for 'platform select', pretty printer scripts, and anything else that must precede the target.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "preRunCommands": {
+                "type": "array",
+                "description": "lldb commands run after the target is created but before the program is launched or attached to.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "postRunCommands": {
+                "type": "array",
+                "description": "lldb commands run once the program has been launched or attached to.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "stopCommands": {
+                "type": "array",
+                "description": "lldb commands run each time the program stops.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "exitCommands": {
+                "type": "array",
+                "description": "lldb commands run once the program has exited.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "terminateCommands": {
+                "type": "array",
+                "description": "lldb commands run when the debug session ends.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "platformName": {
+                "type": "string",
+                "description": "The lldb platform to select, as if by 'platform select'. Needed for remote targets."
+              },
+              "targetTriple": {
+                "type": "string",
+                "description": "The target triple to debug for, overriding the one recorded in the executable."
+              },
+              "debuggerRoot": {
+                "type": "string",
+                "description": "Directory lldb-dap chdirs to before doing anything else, so that relative paths in commands resolve predictably."
+              },
+              "enableAutoVariableSummaries": {
+                "type": "boolean",
+                "description": "Show auto-generated summaries for variables when no language-specific summary applies.",
+                "default": false
+              },
+              "enableSyntheticChildDebugging": {
+                "type": "boolean",
+                "description": "Alongside a synthetic child, also show the raw value it was synthesised from.",
+                "default": false
+              },
+              "displayExtendedBacktrace": {
+                "type": "boolean",
+                "description": "Include extended backtraces, where the platform provides them.",
+                "default": false
+              },
+              "customFrameFormat": {
+                "type": "string",
+                "description": "Format string for stack frame names, using lldb's frame-format syntax."
+              },
+              "customThreadFormat": {
+                "type": "string",
+                "description": "Format string for thread names, using lldb's thread-format syntax."
+              },
+              "timeout": {
+                "type": "number",
+                "description": "Seconds to wait for launchCommands or attachCommands to establish a valid target."
+              },
+              "attachCommands": {
+                "type": "array",
+                "description": "lldb commands used to attach instead of lldb-dap doing it. The last of them must leave a valid, attached target.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "waitFor": {
+                "type": "boolean",
+                "description": "Wait for the next instance of the program to be launched and attach to that, rather than requiring a pid.",
+                "default": false
               }
             }
           }
