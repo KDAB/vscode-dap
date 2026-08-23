@@ -6,11 +6,18 @@
 Load with: command script import /path/to/printers/lldb/qt
 """
 
+from . import qline
+from . import qlinef
 from . import qpoint
+from . import qpointf
+from . import qrect
+from . import qrectf
+from . import qsize
+from . import qsizef
 
 CATEGORY = "kdab-qt"
 
-_MODULES = (qpoint,)
+_MODULES = (qpoint, qpointf, qsize, qsizef, qrect, qrectf, qline, qlinef)
 
 
 def __lldb_init_module(debugger, internal_dict):
