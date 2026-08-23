@@ -1,12 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import * as vscode from "vscode";
 
 import { buildGdbArgs } from "./gdbArguments";
 import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
+import {
+  getGdbVersion,
+  isGdbVersionSufficient,
+  MIN_GDB_VERSION,
+} from "./gdbVersion";
 import {
   expandTilde,
   findExecutableInPath,
@@ -16,47 +19,6 @@ import {
 } from "./paths";
 import { parseSessionOptions } from "./sessionOptions";
 import { KdapSettings, readSettings } from "./settings";
-
-const execFileAsync = promisify(execFile);
-
-/**
- * The lowest gdb version whose DAP support this extension relies on. 16.1 is
- * where gdb defers starting the inferior to "configurationDone"; before that,
- * "launch" ran the program immediately, so breakpoints sent after
- * "initialized" arrived too late and "stopOnEntry" was ignored.
- */
-export const MIN_GDB_VERSION: readonly [number, number] = [16, 1];
-
-/** Parses the "X.Y" version out of gdb's `--version` first line, e.g. "GNU gdb (Ubuntu 15.2-0ubuntu1) 15.2". */
-export function parseGdbVersion(
-  versionOutput: string,
-): [number, number] | undefined {
-  const match = /^GNU gdb.*?(\d+)\.(\d+)/.exec(versionOutput);
-  if (!match) {
-    return undefined;
-  }
-  return [Number(match[1]), Number(match[2])];
-}
-
-export function isGdbVersionSufficient(
-  version: readonly [number, number],
-): boolean {
-  const [major, minor] = version;
-  const [minMajor, minMinor] = MIN_GDB_VERSION;
-  return major > minMajor || (major === minMajor && minor >= minMinor);
-}
-
-/** Runs `gdb --version` and parses the result. Returns undefined if gdb can't be run or its version can't be parsed. */
-export async function getGdbVersion(
-  debuggerPath: string,
-): Promise<[number, number] | undefined> {
-  try {
-    const { stdout } = await execFileAsync(debuggerPath, ["--version"]);
-    return parseGdbVersion(stdout);
-  } catch {
-    return undefined;
-  }
-}
 
 async function getDebuggerPath(
   session: vscode.DebugSession,
