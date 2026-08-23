@@ -1,0 +1,3 @@
+(QPoint) p = QPoint(10,20)
+(QPoint) origin = QPoint(0,0)
+(QPoint) negative = QPoint(-5,-7)

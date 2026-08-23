@@ -27,3 +27,4 @@ eslint.config.mjs
 build_package.sh
 upload_package.sh
 tsconfig.test.json
+printers/
