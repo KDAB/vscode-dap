@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: MIT
 
 import { execFile } from "node:child_process";
-import * as fs from "node:fs/promises";
-import * as os from "node:os";
-import * as path from "path";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
 
 import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
+import {
+  expandConfigPath,
+  expandTilde,
+  findExecutableInPath,
+  isDirectory,
+  isExecutable,
+  resolveExecutablePath,
+} from "./paths";
 
 const execFileAsync = promisify(execFile);
 
@@ -19,34 +24,6 @@ const execFileAsync = promisify(execFile);
  * "initialized" arrived too late and "stopOnEntry" was ignored.
  */
 export const MIN_GDB_VERSION: readonly [number, number] = [16, 1];
-
-/**
- * Whether `filePath` is a regular file the current user can execute. The
- * `isFile()` check matters because `X_OK` also succeeds on any directory with
- * search permission, so pointing `kdap.debuggerPath` at a bin directory instead of
- * the gdb binary would otherwise only fail later, when gdb is run.
- */
-export async function isExecutable(filePath: string): Promise<boolean> {
-  try {
-    const stats = await fs.stat(filePath);
-    if (!stats.isFile()) {
-      return false;
-    }
-    await fs.access(filePath, fs.constants.X_OK);
-  } catch {
-    return false;
-  }
-  return true;
-}
-
-/** Whether `dirPath` exists and is a directory. */
-export async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    return (await fs.stat(dirPath)).isDirectory();
-  } catch {
-    return false;
-  }
-}
 
 /** Parses the "X.Y" version out of gdb's `--version` first line, e.g. "GNU gdb (Ubuntu 15.2-0ubuntu1) 15.2". */
 export function parseGdbVersion(
@@ -79,60 +56,6 @@ export async function getGdbVersion(
   }
 }
 
-/**
- * Expands a leading `~` to the user's home directory. VS Code never does this
- * itself, not even for launch configuration values, so it applies to both
- * settings and launch configurations.
- */
-export function expandTilde(value: string): string {
-  if (value === "~" || value.startsWith("~/")) {
-    return path.join(os.homedir(), value.slice(1));
-  }
-  return value;
-}
-
-/**
- * Expands `${workspaceFolder}` and a leading `~` in values read from the
- * `kdap.*` settings. Unlike launch configuration values, settings read via
- * `vscode.workspace.getConfiguration()` are not substituted by VS Code, so
- * the extension has to do it itself.
- */
-function expandConfigPath(
-  value: string,
-  workspaceFolder: vscode.WorkspaceFolder | undefined,
-): string {
-  return expandTilde(
-    value.replace(/\$\{workspaceFolder\}/g, workspaceFolder?.uri.fsPath ?? ""),
-  );
-}
-
-async function findExecutableInPath(name: string): Promise<string | undefined> {
-  const envPath = process.env["PATH"];
-  if (!envPath) {
-    return undefined;
-  }
-
-  for (const dir of envPath.split(path.delimiter)) {
-    const candidate = path.join(dir, name);
-    if (await isExecutable(candidate)) {
-      return candidate;
-    }
-  }
-  return undefined;
-}
-
-/**
- * A bare command name (e.g. "gdb-multiarch") isn't resolved via PATH by
- * `fs.access`, so look it up ourselves. Values containing a path separator
- * are left untouched.
- */
-async function resolveDebuggerPath(value: string): Promise<string> {
-  if (value.includes(path.sep)) {
-    return value;
-  }
-  return (await findExecutableInPath(value)) ?? value;
-}
-
 async function getDebuggerPath(
   session: vscode.DebugSession,
 ): Promise<string | undefined> {
@@ -140,7 +63,7 @@ async function getDebuggerPath(
   const launchConfigPath: unknown = session.configuration["debuggerPath"];
   if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
     // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
-    return resolveDebuggerPath(expandTilde(launchConfigPath));
+    return resolveExecutablePath(expandTilde(launchConfigPath));
   }
 
   // Then the extension's own setting.
@@ -150,8 +73,8 @@ async function getDebuggerPath(
   );
   const configPath = config.get<string>("debuggerPath");
   if (configPath && configPath.length !== 0) {
-    return resolveDebuggerPath(
-      expandConfigPath(configPath, session.workspaceFolder),
+    return resolveExecutablePath(
+      expandConfigPath(configPath, session.workspaceFolder?.uri.fsPath),
     );
   }
 
@@ -227,7 +150,7 @@ export class GDBDapDescriptorFactory
     if (logPath) {
       args.push(
         "-iex",
-        `set debug dap-log-file ${expandConfigPath(logPath, session.workspaceFolder)}`,
+        `set debug dap-log-file ${expandConfigPath(logPath, session.workspaceFolder?.uri.fsPath)}`,
       );
     }
 

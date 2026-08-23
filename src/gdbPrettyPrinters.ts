@@ -6,6 +6,8 @@ import * as https from "node:https";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { isFile } from "./paths";
+
 const GDB_QT_PRINTERS_BASE_URL =
   "https://raw.githubusercontent.com/iamsergio/kdevelop/vscode-gdb-dap/plugins/gdb/printers";
 
@@ -44,15 +46,6 @@ function downloadFile(url: string, redirectsLeft = 5): Promise<string> {
       req.destroy(new Error("Timed out downloading " + url));
     });
   });
-}
-
-async function pathExists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function getPrettyPrintersDir(context: vscode.ExtensionContext): string {
@@ -135,7 +128,7 @@ export async function getQtPrettyPrintersArgs(
   context: vscode.ExtensionContext,
 ): Promise<string[]> {
   const dir = getPrettyPrintersDir(context);
-  if (!(await pathExists(path.join(dir, "qt.py")))) {
+  if (!(await isFile(path.join(dir, "qt.py")))) {
     const downloadAction = "Download";
     // Modal, because the debug session is blocked waiting for this answer and
     // a regular notification is easy to miss.

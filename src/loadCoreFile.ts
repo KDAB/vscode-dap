@@ -1,37 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
-import * as fs from "node:fs/promises";
 import * as vscode from "vscode";
 
-import { expandTilde } from "./debugAdapterFactory";
 import {
   findKdapLaunchConfigurations,
   pickLaunchConfiguration,
 } from "./launchConfigPicker";
-
-/** Whether `filePath` is a regular file. */
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    return (await fs.stat(filePath)).isFile();
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Expands `${workspaceFolder}` and a leading `~` in a raw launch.json value.
- * These configurations are read directly from settings rather than obtained
- * via the debug-start flow, so VS Code hasn't substituted them yet.
- */
-function resolveConfigPath(
-  value: string,
-  folder: vscode.WorkspaceFolder | undefined,
-): string {
-  return expandTilde(
-    value.replace(/\$\{workspaceFolder\}/g, folder?.uri.fsPath ?? ""),
-  );
-}
+import { expandConfigPath, isFile } from "./paths";
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -53,7 +29,10 @@ async function resolvePathProperty(
 
   let resolvedPath: string;
   if (typeof configValue === "string" && configValue.length !== 0) {
-    resolvedPath = resolveConfigPath(configValue, folder);
+    // These configurations are read directly from settings rather than
+    // obtained via the debug-start flow, so VS Code hasn't substituted
+    // ${workspaceFolder} in them yet.
+    resolvedPath = expandConfigPath(configValue, folder?.uri.fsPath);
   } else {
     const picked = await vscode.window.showOpenDialog({
       title: dialogTitle,
@@ -67,7 +46,7 @@ async function resolvePathProperty(
     resolvedPath = picked[0].fsPath;
   }
 
-  if (!(await fileExists(resolvedPath))) {
+  if (!(await isFile(resolvedPath))) {
     await vscode.window.showErrorMessage(
       `${capitalize(displayName)} '${resolvedPath}' does not exist.`,
     );
