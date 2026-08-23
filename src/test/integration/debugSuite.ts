@@ -126,6 +126,20 @@ export function defineDebugSuite(target: DebuggerBackend) {
         false,
         vscode.ConfigurationTarget.Global,
       );
+
+      // Opt-in DAP logging, for diagnosing a hang or a mismatch between what
+      // the extension sent and what the debugger did with it. Off by default
+      // since kdap.logPath has no default of its own to restore afterwards.
+      const logDir = process.env["KDAP_TEST_DAP_LOG_DIR"];
+      if (logDir) {
+        await vscode.workspace
+          .getConfiguration("kdap")
+          .update(
+            "logPath",
+            path.join(logDir, `${target.id}.log`),
+            vscode.ConfigurationTarget.Global,
+          );
+      }
     });
 
     suiteTeardown(async () => {
@@ -134,6 +148,11 @@ export function defineDebugSuite(target: DebuggerBackend) {
         undefined,
         vscode.ConfigurationTarget.Global,
       );
+      if (process.env["KDAP_TEST_DAP_LOG_DIR"]) {
+        await vscode.workspace
+          .getConfiguration("kdap")
+          .update("logPath", undefined, vscode.ConfigurationTarget.Global);
+      }
     });
 
     teardown(() => {

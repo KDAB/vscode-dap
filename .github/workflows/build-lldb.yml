@@ -39,11 +39,29 @@ jobs:
           # Ubuntu ships lldb-dap-<version> rather than a plain lldb-dap.
           ls /usr/bin/lldb-dap*
 
+      - name: Probe lldb-dap directly (no VS Code involved)
+        # Isolates a hang in lldb-dap/the runner itself from a hang that's
+        # specific to the VS Code extension host, before sinking three
+        # minutes into the mocha timeouts that a hang in the real suite costs.
+        run: node scripts/probe-lldb-dap.js lldb-dap 20000
+
       - name: compile
         run: npm run compile
 
       - name: test
-        run: xvfb-run -a ./test.sh --lldb
+        env:
+          KDAP_TEST_DAP_LOG_DIR: ${{ runner.temp }}/dap-logs
+        run: |
+          mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
+          xvfb-run -a ./test.sh --lldb
+
+      - name: Upload DAP logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dap-logs
+          path: ${{ runner.temp }}/dap-logs
+          if-no-files-found: ignore
 
       - name: vsce package
         run: vsce package

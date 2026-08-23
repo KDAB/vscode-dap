@@ -9,6 +9,7 @@ vsc-extension-quickstart.md
 **/*.ts
 out/test/**
 test/
+scripts/
 .vscode-test.js
 code.code-workspace
 .pre-commit-config.yaml
