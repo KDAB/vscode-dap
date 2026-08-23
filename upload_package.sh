@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 # SPDX-License-Identifier: MIT
 
-# Uploads the gdb-dap-<version>.vsix package to GitHub Release
+# Uploads the dap-<version>.vsix package to GitHub Release
 # Called by .github/workflows/package.yml
 
 set -e
@@ -11,7 +11,7 @@ set -e
 VERSION=$(jq -r '.version' package.json)
 TAG_NAME=v$VERSION
 
-PACKAGE_FILENAME=gdb-dap-$VERSION.vsix
+PACKAGE_FILENAME=dap-$VERSION.vsix
 
 if [ ! -f "$PACKAGE_FILENAME" ]; then
     # Doesn't happen. Package is created by package.yml

@@ -3,25 +3,30 @@
 
 import * as vscode from "vscode";
 
-import { GDBDapDescriptorFactory } from "./debugAdapterFactory";
-import { GDBDapConfigurationProvider } from "./debugConfigurationProvider";
-import { downloadQtPrettyPrinters } from "./gdbPrettyPrinters";
+import { DapDescriptorFactory } from "./debugAdapterFactory";
+import { DapConfigurationProvider } from "./debugConfigurationProvider";
+import { downloadQtPrettyPrinters } from "./debuggers/gdb/prettyPrinters";
+import { backends } from "./debuggers/registry";
 import { loadCoreFile } from "./loadCoreFile";
 import { debugWithArgs, runWithArgs } from "./runWithArgs";
 
 export function activate(context: vscode.ExtensionContext) {
-  const factory = new GDBDapDescriptorFactory(context);
-  context.subscriptions.push(factory);
-  context.subscriptions.push(
-    vscode.debug.registerDebugAdapterDescriptorFactory("kdap", factory),
-  );
-
-  context.subscriptions.push(
-    vscode.debug.registerDebugConfigurationProvider(
-      "kdap",
-      new GDBDapConfigurationProvider(),
-    ),
-  );
+  for (const backend of backends) {
+    const factory = new DapDescriptorFactory(backend, context);
+    context.subscriptions.push(factory);
+    context.subscriptions.push(
+      vscode.debug.registerDebugAdapterDescriptorFactory(
+        backend.debugType,
+        factory,
+      ),
+    );
+    context.subscriptions.push(
+      vscode.debug.registerDebugConfigurationProvider(
+        backend.debugType,
+        new DapConfigurationProvider(backend),
+      ),
+    );
+  }
 
   context.subscriptions.push(
     vscode.commands.registerCommand("kdap.downloadQtPrettyPrinters", () =>

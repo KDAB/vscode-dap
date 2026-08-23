@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: MIT
+
+# CI that builds this vscode extension and runs its integration tests against lldb-dap only.
+# Linux-only by design.
+
+name: build-lldb
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: |
+          npm install --loglevel verbose
+          npm install @vscode/vsce typescript -g
+
+      - name: Install LLDB and gcc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lldb gcc gdb
+
+      - name: Check lldb-dap version
+        run: |
+          # lldb-dap --version prints nothing, so report lldb's instead.
+          lldb --version
+          # Ubuntu ships lldb-dap-<version> rather than a plain lldb-dap.
+          ls /usr/bin/lldb-dap*
+
+      - name: Probe lldb-dap directly (no VS Code involved)
+        # Isolates a hang in lldb-dap/the runner itself from a hang that's
+        # specific to the VS Code extension host, before sinking three
+        # minutes into the mocha timeouts that a hang in the real suite costs.
+        run: node scripts/probe-lldb-dap.js lldb-dap 20000
+
+      - name: compile
+        run: npm run compile
+
+      - name: test
+        env:
+          KDAP_TEST_DAP_LOG_DIR: ${{ runner.temp }}/dap-logs
+          # DEBUGINFOD_URLS="" alone isn't enough here: something between
+          # this step and the adapter process re-sets it before the adapter
+          # actually spawns. This tells the extension itself to disable
+          # debuginfod rather than trust whatever it inherits.
+          KDAB_DAP_DISABLE_DEBUGINFOD: "1"
+        run: |
+          mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
+          xvfb-run -a ./test.sh --lldb
+
+      - name: Dump process state on failure
+        if: failure()
+        # A previous run left the debuggee (and lldb-dap/lldb-server) alive and
+        # untouched at job cleanup, meaning a session started and something got
+        # stuck before ever disconnecting. Every environmental angle checked so
+        # far (signals, DISPLAY, process group, CPU contention) has come back
+        # clean, so this goes one level deeper: an actual thread backtrace of
+        # the stuck lldb-dap/lldb-server, via gdb, showing what syscall or lock
+        # it's really blocked in - plus its open file descriptors, since
+        # lldb-server is launched with a fixed "--fd=N" for its GDB-remote
+        # channel to lldb-dap, and a wrong or already-repurposed fd there would
+        # explain silence on both ends without either side crashing.
+        run: |
+          set +e
+          ps -eo pid,ppid,stat,wchan:32,cmd --forest
+          echo "---"
+          for pid in $(pgrep -f 'lldb-dap|lldb-server|/hello$'); do
+            echo "=== /proc/$pid/status ==="
+            grep -E '^(Name|State|PPid|Tracer)' "/proc/$pid/status" 2>/dev/null
+            echo "=== /proc/$pid/fd ==="
+            sudo ls -la "/proc/$pid/fd" 2>&1
+          done
+          echo "---"
+          for pid in $(pgrep -f 'lldb-dap|lldb-server-'); do
+            echo "=== gdb backtrace of $pid ==="
+            sudo gdb -p "$pid" --batch \
+              -ex "thread apply all bt" \
+              -ex "detach" \
+              -ex "quit" 2>&1
+          done
+          echo "---"
+          sudo ss -tlnp 2>&1 || ss -tln 2>&1
+
+      - name: Upload DAP logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dap-logs
+          path: ${{ runner.temp }}/dap-logs
+          if-no-files-found: ignore
+
+      - name: vsce package
+        run: vsce package

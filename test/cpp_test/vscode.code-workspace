@@ -8,8 +8,16 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "Launch Current Target (GDB DAP)",
+        "name": "Launch Current Target (GDB)",
         "type": "kdap",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "args": [],
+        "cwd": "${command:cmake.buildDirectory}"
+      },
+      {
+        "name": "Launch Current Target (LLDB)",
+        "type": "kdap-lldb",
         "request": "launch",
         "program": "${command:cmake.launchTargetPath}",
         "args": [],

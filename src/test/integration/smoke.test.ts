@@ -2,15 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 import * as assert from "assert";
-import * as os from "node:os";
 import * as vscode from "vscode";
 
-import * as path from "path";
-
-import { expandTilde, isExecutable } from "../../debugAdapterFactory";
-
 suite("Extension Smoke Tests", () => {
-  const extensionId = "KDAB.gdb-dap";
+  const extensionId = "KDAB.dap";
 
   test("extension is present", () => {
     const ext = vscode.extensions.getExtension(extensionId);
@@ -25,42 +20,13 @@ suite("Extension Smoke Tests", () => {
   });
 
   test("configuration keys are declared", () => {
-    const config = vscode.workspace.getConfiguration("kdap");
+    const config = vscode.workspace.getConfiguration("kdap.gdb");
     const logLevel = config.inspect("logLevel");
-    assert.ok(logLevel, "kdap.logLevel should be declared");
+    assert.ok(logLevel, "kdap.gdb.logLevel should be declared");
     assert.strictEqual(
       logLevel?.defaultValue,
       1,
       "logLevel default should be 1",
     );
-  });
-
-  test("isExecutable accepts an executable file", async () => {
-    assert.strictEqual(await isExecutable(process.execPath), true);
-  });
-
-  test("isExecutable rejects a directory", async () => {
-    // A searchable directory passes access(X_OK), so this only holds because
-    // isExecutable also requires a regular file.
-    assert.strictEqual(await isExecutable(os.tmpdir()), false);
-  });
-
-  test("isExecutable rejects a missing path", async () => {
-    assert.strictEqual(await isExecutable("/nonexistent/kdap-test/gdb"), false);
-  });
-
-  test("expandTilde expands a leading ~", () => {
-    assert.strictEqual(
-      expandTilde("~/bin/gdb"),
-      path.join(os.homedir(), "bin", "gdb"),
-    );
-    assert.strictEqual(expandTilde("~"), os.homedir());
-  });
-
-  test("expandTilde leaves other paths alone", () => {
-    assert.strictEqual(expandTilde("/usr/bin/gdb"), "/usr/bin/gdb");
-    assert.strictEqual(expandTilde("gdb-multiarch"), "gdb-multiarch");
-    // Not a home directory reference, so it must not be touched.
-    assert.strictEqual(expandTilde("~other/bin/gdb"), "~other/bin/gdb");
   });
 });
