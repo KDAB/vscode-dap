@@ -3,13 +3,7 @@
 
 import * as vscode from "vscode";
 
-import { buildGdbArgs } from "./gdbArguments";
-import { getQtPrettyPrintersArgs } from "./gdbPrettyPrinters";
-import {
-  getGdbVersion,
-  isGdbVersionSufficient,
-  MIN_GDB_VERSION,
-} from "./gdbVersion";
+import { DebuggerBackend, isBackendError } from "./debuggers/backend";
 import {
   expandTilde,
   findExecutableInPath,
@@ -20,35 +14,40 @@ import {
 import { parseSessionOptions } from "./sessionOptions";
 import { KdapSettings, readSettings } from "./settings";
 
-async function getDebuggerPath(
-  session: vscode.DebugSession,
-  settings: KdapSettings,
-): Promise<string | undefined> {
-  // Explicit path in the launch configuration takes priority.
-  const launchConfigPath: unknown = session.configuration["debuggerPath"];
-  if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
-    // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
-    return resolveExecutablePath(expandTilde(launchConfigPath));
-  }
+/**
+ * Shows an error with a shortcut to the setting that would fix it, since every
+ * failure in here is a matter of pointing the extension at the right binary.
+ */
+async function showErrorWithSetting(message: string, settingKey: string) {
+  const openSettingsAction = "Open Settings";
+  const choice = await vscode.window.showErrorMessage(
+    message,
+    openSettingsAction,
+  );
 
-  // Then the extension's own setting.
-  if (settings.debuggerPath) {
-    return resolveExecutablePath(settings.debuggerPath);
+  if (choice === openSettingsAction) {
+    await vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      settingKey,
+    );
   }
-
-  // Fall back to searching PATH.
-  return findExecutableInPath("gdb");
 }
 
 /**
- * Launches gdb in DAP mode (`gdb -i dap`) for a debug session, resolving
- * which gdb binary to use from the launch configuration, extension settings,
- * or PATH, in that order.
+ * Launches a debugger as VS Code's debug adapter, resolving which binary to
+ * use from the launch configuration, the extension settings, or PATH, in that
+ * order.
+ *
+ * Which debugger, and what to pass it, is entirely up to the `DebuggerBackend`
+ * this is constructed with - one instance per supported debugger.
  */
-export class GDBDapDescriptorFactory
+export class DapDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory, vscode.Disposable
 {
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    private readonly backend: DebuggerBackend,
+    private readonly context: vscode.ExtensionContext,
+  ) {}
 
   dispose() {}
 
@@ -57,94 +56,79 @@ export class GDBDapDescriptorFactory
   ): Promise<vscode.DebugAdapterDescriptor | undefined> {
     const settings = readSettings(session.workspaceFolder);
 
-    const debuggerPath = await getDebuggerPath(session, settings);
-    if (!debuggerPath || !(await isExecutable(debuggerPath))) {
-      await GDBDapDescriptorFactory.showGdbNotFoundMessage(debuggerPath);
+    const binaryPath = await this.resolveBinaryPath(session, settings);
+    if (!binaryPath || !(await isExecutable(binaryPath))) {
+      await this.showBinaryNotFoundMessage(binaryPath);
       return undefined;
     }
 
-    const version = await getGdbVersion(debuggerPath);
-    if (!version || !isGdbVersionSufficient(version)) {
-      await GDBDapDescriptorFactory.showGdbVersionTooOldMessage(
-        debuggerPath,
-        version,
-      );
+    const unusable = await this.backend.checkBinary(binaryPath);
+    if (unusable) {
+      await showErrorWithSetting(unusable, this.backend.pathSettingKey);
       return undefined;
     }
 
     const options = parseSessionOptions(session.configuration, settings);
 
     if (options.sysroot && !(await isDirectory(options.sysroot))) {
-      await GDBDapDescriptorFactory.showSysrootNotFoundMessage(options.sysroot);
+      await vscode.window.showErrorMessage(
+        `sysroot path '${options.sysroot}' is not an existing folder.`,
+      );
       return undefined;
     }
 
-    const prettyPrinterArgs = options.qtPrettyPrinters
-      ? await getQtPrettyPrintersArgs(this.context)
-      : [];
+    const command = await this.backend.adapterCommand(options, {
+      extensionContext: this.context,
+    });
+    if (isBackendError(command)) {
+      await vscode.window.showErrorMessage(command.message);
+      return undefined;
+    }
 
-    const args = buildGdbArgs(options, prettyPrinterArgs);
-
-    // VS Code merges this into the extension host's own environment, so gdb
-    // ends up with `process.env` plus these. GDBDapConfigurationProvider
-    // relies on that when it works out what the inferior inherits.
-    const executableOptions = settings.environment
-      ? { env: { ...settings.environment } }
-      : undefined;
+    // kdap.environment is the user's escape hatch; anything the backend
+    // derived from a more specific setting takes precedence over it.
+    const env = { ...settings.environment, ...command.env };
+    const executableOptions =
+      Object.keys(env).length !== 0 ? { env } : undefined;
 
     return new vscode.DebugAdapterExecutable(
-      debuggerPath,
-      args,
+      binaryPath,
+      [...command.args],
       executableOptions,
     );
   }
 
-  /** Shows a message box when the gdb executable can't be found. */
-  static async showGdbNotFoundMessage(debuggerPath?: string) {
-    const message = debuggerPath
-      ? `gdb path '${debuggerPath}' is not a valid executable.`
-      : `Unable to find gdb. Install GDB ${MIN_GDB_VERSION[0]}.${MIN_GDB_VERSION[1]} or later, or set kdap.debuggerPath.`;
-    const openSettingsAction = "Open Settings";
-    const choice = await vscode.window.showErrorMessage(
-      message,
-      openSettingsAction,
-    );
-
-    if (choice === openSettingsAction) {
-      await vscode.commands.executeCommand(
-        "workbench.action.openSettings",
-        "kdap.debuggerPath",
-      );
+  private async resolveBinaryPath(
+    session: vscode.DebugSession,
+    settings: KdapSettings,
+  ): Promise<string | undefined> {
+    // Explicit path in the launch configuration takes priority.
+    const launchConfigPath: unknown = session.configuration["debuggerPath"];
+    if (typeof launchConfigPath === "string" && launchConfigPath.length !== 0) {
+      // VS Code substitutes ${workspaceFolder} in launch.json, but not `~`.
+      return resolveExecutablePath(expandTilde(launchConfigPath));
     }
+
+    // Then the extension's own setting.
+    if (settings.debuggerPath) {
+      return resolveExecutablePath(settings.debuggerPath);
+    }
+
+    // Fall back to searching PATH, preferring the earlier candidates.
+    for (const name of this.backend.binaryNames) {
+      const found = await findExecutableInPath(name);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
   }
 
-  /** Shows a message box when the launch configuration's `sysroot` doesn't point at an existing folder. */
-  static async showSysrootNotFoundMessage(sysrootPath: string) {
-    await vscode.window.showErrorMessage(
-      `sysroot path '${sysrootPath}' is not an existing folder.`,
-    );
-  }
-
-  /** Shows a message box when the gdb executable's version is too old, or couldn't be determined. */
-  static async showGdbVersionTooOldMessage(
-    debuggerPath: string,
-    version: [number, number] | undefined,
-  ) {
-    const [minMajor, minMinor] = MIN_GDB_VERSION;
-    const message = version
-      ? `gdb at '${debuggerPath}' is version ${version[0]}.${version[1]}, but this extension requires ${minMajor}.${minMinor} or later.`
-      : `Unable to determine the version of gdb at '${debuggerPath}'. This extension requires gdb ${minMajor}.${minMinor} or later.`;
-    const openSettingsAction = "Open Settings";
-    const choice = await vscode.window.showErrorMessage(
-      message,
-      openSettingsAction,
-    );
-
-    if (choice === openSettingsAction) {
-      await vscode.commands.executeCommand(
-        "workbench.action.openSettings",
-        "kdap.debuggerPath",
-      );
-    }
+  private async showBinaryNotFoundMessage(binaryPath?: string) {
+    const { displayName, installHint, pathSettingKey } = this.backend;
+    const message = binaryPath
+      ? `${displayName} path '${binaryPath}' is not a valid executable.`
+      : `Unable to find ${displayName}. ${installHint}, or set ${pathSettingKey}.`;
+    await showErrorWithSetting(message, pathSettingKey);
   }
 }

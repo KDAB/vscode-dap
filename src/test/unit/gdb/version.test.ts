@@ -7,7 +7,7 @@ import {
   isGdbVersionSufficient,
   MIN_GDB_VERSION,
   parseGdbVersion,
-} from "../../gdbVersion";
+} from "../../../debuggers/gdb/version";
 
 suite("parseGdbVersion", () => {
   const accepted: [string, [number, number]][] = [

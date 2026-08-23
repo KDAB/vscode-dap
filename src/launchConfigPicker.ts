@@ -3,12 +3,14 @@
 
 import * as vscode from "vscode";
 
+import { debugTypes } from "./debuggers/registry";
+
 export interface LaunchConfigCandidate {
   folder: vscode.WorkspaceFolder | undefined;
   config: vscode.DebugConfiguration;
 }
 
-/** Every `kdap` launch configuration with the given `request`, across all workspace folders (or the single implicit folder when there's no workspace). */
+/** Every launch configuration of one of this extension's debug types with the given `request`, across all workspace folders (or the single implicit folder when there's no workspace). */
 export function findKdapLaunchConfigurations(
   request: "launch" | "attach",
 ): LaunchConfigCandidate[] {
@@ -19,7 +21,10 @@ export function findKdapLaunchConfigurations(
       .getConfiguration("launch", folder)
       .get<vscode.DebugConfiguration[]>("configurations", []);
     for (const config of configurations) {
-      if (config["type"] === "kdap" && config["request"] === request) {
+      if (
+        debugTypes.includes(config["type"]) &&
+        config["request"] === request
+      ) {
         candidates.push({ folder, config });
       }
     }

@@ -6,7 +6,7 @@ import * as https from "node:https";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { isFile } from "./paths";
+import { isFile } from "../../paths";
 
 const GDB_QT_PRINTERS_BASE_URL =
   "https://raw.githubusercontent.com/iamsergio/kdevelop/vscode-gdb-dap/plugins/gdb/printers";

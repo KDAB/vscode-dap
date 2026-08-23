@@ -3,8 +3,8 @@
 
 import * as assert from "assert";
 
-import { buildGdbArgs } from "../../gdbArguments";
-import { SessionOptions } from "../../sessionOptions";
+import { buildGdbArgs } from "../../../debuggers/gdb/arguments";
+import { SessionOptions } from "../../../sessionOptions";
 
 const noOptions: SessionOptions = {
   skipInitFiles: false,

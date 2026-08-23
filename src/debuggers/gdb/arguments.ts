@@ -4,7 +4,7 @@
 // Deliberately free of any `vscode` import, so that its tests can run under
 // plain mocha instead of needing a VS Code instance.
 
-import { SessionOptions } from "./sessionOptions";
+import { SessionOptions } from "../../sessionOptions";
 
 /**
  * Builds gdb's command line for a debug session. gdb expresses nearly
