@@ -26,7 +26,7 @@ export class DapConfigurationProvider
   ): vscode.DebugConfiguration {
     return this.backend.resolveConfiguration(
       debugConfiguration,
-      readSettings(folder),
+      readSettings(folder, this.backend.id),
     );
   }
 }

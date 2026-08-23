@@ -68,7 +68,7 @@
       "type": "object",
       "title": "KDAB DAP",
       "properties": {
-        "kdap.debuggerPath": {
+        "kdap.gdb.path": {
           "scope": "resource",
           "type": "string",
           "description": "The path to the gdb binary. Defaults to searching for 'gdb' in PATH."
@@ -78,10 +78,10 @@
           "type": "string",
           "description": "Enable DAP logging. Logs are written to this filename. If empty, logging is disabled."
         },
-        "kdap.logLevel": {
+        "kdap.gdb.logLevel": {
           "scope": "resource",
           "type": "integer",
-          "description": "Set the DAP logging level. The default is 1, which logs the DAP protocol and unexpected exceptions. Level 2 also logs exceptions that are considered expected, such as a failure to parse an expression.",
+          "description": "Set gdb's DAP logging level. The default is 1, which logs the DAP protocol and unexpected exceptions. Level 2 also logs exceptions that are considered expected, such as a failure to parse an expression.",
           "default": 1,
           "minimum": 1,
           "maximum": 2
@@ -90,12 +90,12 @@
           "scope": "resource",
           "type": "object",
           "default": {},
-          "description": "Extra environment variables to set on the gdb process.",
+          "description": "Extra environment variables to set on the debugger process.",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "kdap.qtPrettyPrinters": {
+        "kdap.gdb.qtPrettyPrinters": {
           "scope": "resource",
           "type": "boolean",
           "default": true,
@@ -178,9 +178,9 @@
                 "type": "string",
                 "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
               },
-              "skipGdbinit": {
+              "skipInitFiles": {
                 "type": "boolean",
-                "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
+                "description": "Skip reading the debugger's own init files. For gdb, as if by passing '-nx'.",
                 "default": false
               },
               "sourceFileMap": {
@@ -229,9 +229,9 @@
                 "type": "string",
                 "description": "Path to the system root gdb should use when looking for shared libraries and debug info, as if by 'set sysroot'. If empty or omitted, gdb's default sysroot handling applies."
               },
-              "skipGdbinit": {
+              "skipInitFiles": {
                 "type": "boolean",
-                "description": "Skip reading .gdbinit files, as if by passing '-nx'.",
+                "description": "Skip reading the debugger's own init files. For gdb, as if by passing '-nx'.",
                 "default": false
               },
               "sourceFileMap": {

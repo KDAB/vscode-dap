@@ -31,9 +31,12 @@ when adding a new configuration.
 ## Launch configuration
 
 - `debuggerPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
-  `kdap.debuggerPath` setting.
+  `kdap.gdb.path` setting.
 - `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
   info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
+- `skipInitFiles`: Skip reading gdb's init files, as if by passing `-nx`. Defaults to `false`.
+- `sourceFileMap`: Maps source paths recorded in the debug info to their location on disk, as if
+  by `set substitute-path`.
 - `program`: Path to the executable to debug. Corresponds to gdb's `file` command.
 - `args`: Command-line arguments passed to the inferior, as if by `set args`.
 - `cwd`: The working directory for gdb and the launched program. If omitted, gdb inherits VS Code's
@@ -49,9 +52,12 @@ when adding a new configuration.
 ## Attach configuration
 
 - `debuggerPath`: Path to the gdb executable to use, with a leading `~` expanded. Overrides the
-  `kdap.debuggerPath` setting.
+  `kdap.gdb.path` setting.
 - `sysroot`: Path to the system root gdb should use when looking for shared libraries and debug
   info, as if by `set sysroot`. If empty or omitted, gdb's default sysroot handling applies.
+- `skipInitFiles`: Skip reading gdb's init files, as if by passing `-nx`. Defaults to `false`.
+- `sourceFileMap`: Maps source paths recorded in the debug info to their location on disk, as if
+  by `set substitute-path`.
 - `pid`: The process ID to which gdb should attach.
 - `program`: Path to the executable being debugged.
 - `target`: The target to which gdb should connect, passed to `target remote`.
@@ -59,11 +65,11 @@ when adding a new configuration.
 
 ## Settings
 
-- `kdap.debuggerPath`: Path to the gdb binary. Defaults to searching `PATH`.
+- `kdap.gdb.path`: Path to the gdb binary. Defaults to searching `PATH`.
 - `kdap.logPath`: Enable DAP logging to this file.
-- `kdap.logLevel`: DAP logging verbosity (default `1`).
-- `kdap.environment`: Extra environment variables set on the gdb process itself.
-- `kdap.qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `true`). If
+- `kdap.gdb.logLevel`: gdb's DAP logging verbosity (default `1`).
+- `kdap.environment`: Extra environment variables set on the debugger process itself.
+- `kdap.gdb.qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `true`). If
   they haven't been downloaded yet, starting a debug session offers to download them; declining
   starts the session without them.
 

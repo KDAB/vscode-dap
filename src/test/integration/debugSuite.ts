@@ -95,13 +95,13 @@ export function defineDebugSuite(target: TestDebugger) {
       // Otherwise starting a session on a machine without the printers pops a
       // modal offering to download them, which nothing here would ever answer.
       await vscode.workspace
-        .getConfiguration("kdap")
+        .getConfiguration(`kdap.${target.id}`)
         .update("qtPrettyPrinters", false, vscode.ConfigurationTarget.Global);
     });
 
     suiteTeardown(async () => {
       await vscode.workspace
-        .getConfiguration("kdap")
+        .getConfiguration(`kdap.${target.id}`)
         .update(
           "qtPrettyPrinters",
           undefined,

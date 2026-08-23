@@ -6,8 +6,9 @@ import * as vscode from "vscode";
 import { expandConfigPath } from "./paths";
 
 /**
- * A snapshot of the `kdap.*` settings for one workspace folder, with paths
- * already expanded and empty strings normalised to `undefined`.
+ * A snapshot of the `kdap.*` settings that apply to one debugger in one
+ * workspace folder, with paths already expanded and empty strings normalised
+ * to `undefined`.
  *
  * Reading the settings needs vscode; consuming them doesn't. Keeping the
  * result plain data means everything downstream stays unit-testable, and
@@ -29,20 +30,28 @@ function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length !== 0 ? value : undefined;
 }
 
+/**
+ * Reads the settings for the debugger with the given id. Settings whose
+ * meaning or availability depends on the debugger live under `kdap.<id>.`,
+ * since one setting can't hold two debuggers' binary paths; the rest are
+ * shared across all of them.
+ */
 export function readSettings(
   folder: vscode.WorkspaceFolder | undefined,
+  debuggerId: string,
 ): KdapSettings {
-  const config = vscode.workspace.getConfiguration("kdap", folder);
+  const shared = vscode.workspace.getConfiguration("kdap", folder);
+  const own = vscode.workspace.getConfiguration(`kdap.${debuggerId}`, folder);
   const folderPath = folder?.uri.fsPath;
 
-  const debuggerPath = optionalString(config.get<string>("debuggerPath"));
-  const logPath = optionalString(config.get<string>("logPath"));
+  const debuggerPath = optionalString(own.get<string>("path"));
+  const logPath = optionalString(shared.get<string>("logPath"));
 
   return {
     debuggerPath: debuggerPath && expandConfigPath(debuggerPath, folderPath),
     logPath: logPath && expandConfigPath(logPath, folderPath),
-    logLevel: config.get<number>("logLevel"),
-    environment: config.get<Record<string, string>>("environment"),
-    qtPrettyPrinters: config.get<boolean>("qtPrettyPrinters") ?? false,
+    logLevel: own.get<number>("logLevel"),
+    environment: shared.get<Record<string, string>>("environment"),
+    qtPrettyPrinters: own.get<boolean>("qtPrettyPrinters") ?? false,
   };
 }

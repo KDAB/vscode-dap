@@ -54,7 +54,7 @@ export class DapDescriptorFactory
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession,
   ): Promise<vscode.DebugAdapterDescriptor | undefined> {
-    const settings = readSettings(session.workspaceFolder);
+    const settings = readSettings(session.workspaceFolder, this.backend.id);
 
     const binaryPath = await this.resolveBinaryPath(session, settings);
     if (!binaryPath || !(await isExecutable(binaryPath))) {

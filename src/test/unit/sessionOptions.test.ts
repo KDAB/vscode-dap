@@ -36,12 +36,12 @@ suite("parseSessionOptions", () => {
     });
   });
 
-  test("skipGdbinit is only honoured when it really is true", () => {
-    assert.strictEqual(parse({ skipGdbinit: true }).skipInitFiles, true);
-    assert.strictEqual(parse({ skipGdbinit: false }).skipInitFiles, false);
+  test("skipInitFiles is only honoured when it really is true", () => {
+    assert.strictEqual(parse({ skipInitFiles: true }).skipInitFiles, true);
+    assert.strictEqual(parse({ skipInitFiles: false }).skipInitFiles, false);
     // launch.json is JSON, so a string here is a user mistake rather than
     // something to coerce.
-    assert.strictEqual(parse({ skipGdbinit: "true" }).skipInitFiles, false);
+    assert.strictEqual(parse({ skipInitFiles: "true" }).skipInitFiles, false);
   });
 
   test("sysroot has a leading ~ expanded", () => {

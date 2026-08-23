@@ -20,9 +20,9 @@ suite("Extension Smoke Tests", () => {
   });
 
   test("configuration keys are declared", () => {
-    const config = vscode.workspace.getConfiguration("kdap");
+    const config = vscode.workspace.getConfiguration("kdap.gdb");
     const logLevel = config.inspect("logLevel");
-    assert.ok(logLevel, "kdap.logLevel should be declared");
+    assert.ok(logLevel, "kdap.gdb.logLevel should be declared");
     assert.strictEqual(
       logLevel?.defaultValue,
       1,

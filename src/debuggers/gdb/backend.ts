@@ -36,7 +36,7 @@ export class GdbBackend implements DebuggerBackend {
   readonly displayName = "gdb";
   readonly debugType = "kdap";
   readonly binaryNames = ["gdb"];
-  readonly pathSettingKey = "kdap.debuggerPath";
+  readonly pathSettingKey = "kdap.gdb.path";
   readonly installHint = `Install GDB ${MIN_MAJOR}.${MIN_MINOR} or later`;
 
   async checkBinary(binaryPath: string): Promise<string | undefined> {

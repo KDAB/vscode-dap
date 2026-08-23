@@ -68,7 +68,7 @@ export function parseSessionOptions(
   const sysroot = optionalString(config["sysroot"]);
 
   return {
-    skipInitFiles: config["skipGdbinit"] === true,
+    skipInitFiles: config["skipInitFiles"] === true,
     sysroot: sysroot && expandTilde(sysroot),
     sourceFileMap: parseSourceFileMap(config["sourceFileMap"]),
     logPath: settings.logPath,
