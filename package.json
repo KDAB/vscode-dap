@@ -1,7 +1,7 @@
 {
   "name": "dap",
   "displayName": "KDAB DAP",
-  "description": "Debug C/C++ programs using GDB's built-in Debug Adapter Protocol support",
+  "description": "Debug C/C++ programs using GDB's or LLDB's built-in Debug Adapter Protocol support",
   "version": "1.1.0",
   "publisher": "KDAB",
   "repository": {
@@ -20,7 +20,8 @@
     "Debuggers"
   ],
   "activationEvents": [
-    "onDebugResolve:kdap"
+    "onDebugResolve:kdap",
+    "onDebugResolve:kdap-lldb"
   ],
   "main": "./out/extension.js",
   "scripts": {
@@ -51,6 +52,7 @@
   "keywords": [
     "KDAB",
     "GDB",
+    "LLDB",
     "DAP",
     "debugger",
     "C",
@@ -72,6 +74,11 @@
           "scope": "resource",
           "type": "string",
           "description": "The path to the gdb binary. Defaults to searching for 'gdb' in PATH."
+        },
+        "kdap.lldb.path": {
+          "scope": "resource",
+          "type": "string",
+          "description": "The path to the lldb-dap binary. Defaults to searching for 'lldb-dap', then 'lldb-dap-<version>', in PATH."
         },
         "kdap.logPath": {
           "scope": "resource",
@@ -303,6 +310,136 @@
             "description": "Load a core dump in gdb",
             "body": {
               "type": "kdap",
+              "request": "attach",
+              "name": "${2:Core}",
+              "program": "${1:<your program>}",
+              "coreFile": "${1:<your program>}.core"
+            }
+          }
+        ]
+      },
+      {
+        "type": "kdap-lldb",
+        "label": "LLDB (DAP)",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "debuggerPath": {
+                "type": "string",
+                "markdownDescription": "The path to the lldb-dap executable to use."
+              },
+              "sourceFileMap": {
+                "type": "object",
+                "description": "Maps source paths recorded in the debug info to their location on disk, as if by 'settings set target.source-map'. Each key is the path as recorded in the debug info and each value is where that path is found locally.",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "program": {
+                "type": "string",
+                "description": "Path to the executable to debug."
+              },
+              "args": {
+                "type": "array",
+                "description": "Command-line arguments passed to the inferior.",
+                "default": []
+              },
+              "cwd": {
+                "type": "string",
+                "markdownDescription": "The working directory for lldb-dap and the launched program. If omitted, lldb-dap inherits VS Code's working directory rather than the workspace folder, so set this explicitly (e.g. `${workspaceFolder}`)."
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables for the inferior. Each key is a variable name and each value must be a string. These are added to the environment the inferior inherits rather than replacing it.",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Stop at the program's entry point.",
+                "default": false
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "debuggerPath": {
+                "type": "string",
+                "markdownDescription": "The path to the lldb-dap executable to use."
+              },
+              "sourceFileMap": {
+                "type": "object",
+                "description": "Maps source paths recorded in the debug info to their location on disk, as if by 'settings set target.source-map'. Each key is the path as recorded in the debug info and each value is where that path is found locally.",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "pid": {
+                "type": [
+                  "number",
+                  "string"
+                ],
+                "description": "The process ID to which lldb should attach."
+              },
+              "program": {
+                "type": "string",
+                "description": "Path to the executable being debugged."
+              },
+              "coreFile": {
+                "type": "string",
+                "description": "Path to a core dump file to load instead of attaching to a live process."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "kdap-lldb",
+            "request": "launch",
+            "name": "Debug (LLDB)",
+            "program": "${workspaceFolder}/<your program>",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "LLDB: Launch",
+            "description": "Launch a program under lldb-dap",
+            "body": {
+              "type": "kdap-lldb",
+              "request": "launch",
+              "name": "${2:Launch}",
+              "program": "^\"\\${workspaceFolder}/${1:<your program>}\"",
+              "args": [],
+              "cwd": "^\"\\${workspaceFolder}\"",
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "LLDB: Attach",
+            "description": "Attach lldb-dap to a running process",
+            "body": {
+              "type": "kdap-lldb",
+              "request": "attach",
+              "name": "${2:Attach}",
+              "program": "${1:<your program>}"
+            }
+          },
+          {
+            "label": "LLDB: Load Core Dump",
+            "description": "Load a core dump in lldb-dap",
+            "body": {
+              "type": "kdap-lldb",
               "request": "attach",
               "name": "${2:Core}",
               "program": "${1:<your program>}",

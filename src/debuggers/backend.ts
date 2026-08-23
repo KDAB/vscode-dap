@@ -13,6 +13,12 @@ export interface AdapterCommand {
    * extension host's own environment rather than replacing it.
    */
   readonly env?: Readonly<Record<string, string>>;
+  /**
+   * Options the user asked for that this debugger can't honour, named as the
+   * user spelled them. Reported once when the session starts: silently
+   * ignoring a configured option is worse than saying so.
+   */
+  readonly unsupported?: readonly string[];
 }
 
 /** A reason not to start the session, to be reported to the user by the caller. */

@@ -5,10 +5,13 @@ import * as assert from "assert";
 import * as os from "node:os";
 import * as path from "path";
 
+import * as fs from "node:fs/promises";
+
 import {
   expandConfigPath,
   expandTilde,
   findExecutableInPath,
+  findVersionedExecutableInPath,
   isDirectory,
   isExecutable,
   isFile,
@@ -104,6 +107,104 @@ suite("paths", () => {
       await resolveExecutablePath("/nonexistent/kdap-test/gdb"),
       "/nonexistent/kdap-test/gdb",
     );
+  });
+
+  suite("findVersionedExecutableInPath", () => {
+    // Ubuntu's llvm packages install lldb-dap-20 and no lldb-dap at all, so a
+    // temporary PATH with the suffixed names is the case that matters.
+    let root: string;
+    let firstDir: string;
+    let secondDir: string;
+    let originalPath: string | undefined;
+
+    async function makeExecutable(dir: string, name: string) {
+      const filePath = path.join(dir, name);
+      await fs.writeFile(filePath, "#!/bin/sh\n", { mode: 0o755 });
+      return filePath;
+    }
+
+    setup(async () => {
+      root = await fs.mkdtemp(path.join(os.tmpdir(), "kdap-paths-"));
+      firstDir = path.join(root, "first");
+      secondDir = path.join(root, "second");
+      await fs.mkdir(firstDir);
+      await fs.mkdir(secondDir);
+      originalPath = process.env["PATH"];
+      // A nonexistent directory in PATH must not stop the search.
+      process.env["PATH"] = [
+        firstDir,
+        path.join(root, "missing"),
+        secondDir,
+      ].join(path.delimiter);
+    });
+
+    teardown(async () => {
+      process.env["PATH"] = originalPath;
+      await fs.rm(root, { recursive: true, force: true });
+    });
+
+    test("finds the plain name", async () => {
+      const expected = await makeExecutable(secondDir, "lldb-dap");
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        expected,
+      );
+    });
+
+    test("finds a versioned name when there is no plain one", async () => {
+      const expected = await makeExecutable(secondDir, "lldb-dap-20");
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        expected,
+      );
+    });
+
+    test("prefers the highest version", async () => {
+      await makeExecutable(firstDir, "lldb-dap-9");
+      await makeExecutable(firstDir, "lldb-dap-18");
+      const expected = await makeExecutable(secondDir, "lldb-dap-20");
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        expected,
+      );
+    });
+
+    test("prefers the plain name over a higher version", async () => {
+      // Whatever the system points the bare name at is what it means by it.
+      const expected = await makeExecutable(secondDir, "lldb-dap");
+      await makeExecutable(firstDir, "lldb-dap-99");
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        expected,
+      );
+    });
+
+    test("ignores names that only look versioned", async () => {
+      await makeExecutable(firstDir, "lldb-dap-next");
+      await makeExecutable(firstDir, "lldb-dap-20-old");
+      await makeExecutable(firstDir, "lldb-dapper");
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        undefined,
+      );
+    });
+
+    test("ignores a match that isn't executable", async () => {
+      await fs.writeFile(path.join(firstDir, "lldb-dap-20"), "", {
+        mode: 0o644,
+      });
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        undefined,
+      );
+    });
+
+    test("returns undefined when nothing matches", async () => {
+      assert.strictEqual(
+        await findVersionedExecutableInPath("lldb-dap"),
+        undefined,
+      );
+    });
   });
 
   test("resolveExecutablePath returns an unresolvable bare name unchanged", async () => {

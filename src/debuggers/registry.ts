@@ -3,12 +3,16 @@
 
 import { DebuggerBackend } from "./backend";
 import { GdbBackend } from "./gdb/backend";
+import { LldbBackend } from "./lldb/backend";
 
 /**
  * Every debugger this extension supports. Adding one means adding it here and
  * contributing its debug type in package.json; nothing else enumerates them.
  */
-export const backends: readonly DebuggerBackend[] = [new GdbBackend()];
+export const backends: readonly DebuggerBackend[] = [
+  new GdbBackend(),
+  new LldbBackend(),
+];
 
 /** The debug types this extension handles. */
 export const debugTypes: readonly string[] = backends.map((b) => b.debugType);

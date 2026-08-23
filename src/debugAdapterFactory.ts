@@ -72,6 +72,13 @@ export class DapDescriptorFactory
       return undefined;
     }
 
+    if (command.unsupported && command.unsupported.length !== 0) {
+      // Not fatal: the session is still worth having without them.
+      void vscode.window.showWarningMessage(
+        `${this.backend.displayName} does not support ${command.unsupported.join(", ")}; ignoring.`,
+      );
+    }
+
     // kdap.environment is the user's escape hatch; anything the backend
     // derived from a more specific setting takes precedence over it.
     const env = { ...options.environment, ...command.env };

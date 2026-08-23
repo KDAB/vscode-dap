@@ -93,6 +93,59 @@ export async function findExecutableInPath(
 }
 
 /**
+ * Finds an executable named `name`, or `name-<number>` when there is no plain
+ * `name`. Distributions often ship only the suffixed form - Ubuntu's llvm
+ * packages install `lldb-dap-20` and no `lldb-dap` - so looking for the bare
+ * name alone finds nothing on a machine that has the tool installed.
+ *
+ * The unsuffixed name wins wherever it appears in PATH, on the grounds that it
+ * is what the system has been set up to mean; otherwise the highest suffix
+ * does.
+ */
+export async function findVersionedExecutableInPath(
+  name: string,
+): Promise<string | undefined> {
+  const envPath = process.env["PATH"];
+  if (!envPath) {
+    return undefined;
+  }
+
+  const suffixed = new RegExp(`^${name}-(\\d+)$`);
+  let best: { version: number; path: string } | undefined;
+
+  for (const dir of envPath.split(path.delimiter)) {
+    const exact = path.join(dir, name);
+    if (await isExecutable(exact)) {
+      return exact;
+    }
+
+    let entries: string[];
+    try {
+      entries = await fs.readdir(dir);
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const match = suffixed.exec(entry);
+      if (!match) {
+        continue;
+      }
+      const version = Number(match[1]);
+      if (best && best.version >= version) {
+        continue;
+      }
+      const candidate = path.join(dir, entry);
+      if (await isExecutable(candidate)) {
+        best = { version, path: candidate };
+      }
+    }
+  }
+
+  return best?.path;
+}
+
+/**
  * A bare command name (e.g. "gdb-multiarch") isn't resolved via PATH by
  * `fs.access`, so look it up ourselves. Values containing a path separator are
  * left untouched.
