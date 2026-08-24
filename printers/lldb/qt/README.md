@@ -261,8 +261,8 @@ typical Linux setup. A sufficiently stripped Qt install would just make every
 "unrecognised layout" case - falling back to the default struct display of the raw `d` pointer,
 not anything actively wrong.
 
-The relevant `QUrlPrivate` members are `port` (`int`, `-1` when absent) and five plain `QString`
-members - `scheme`, `userName`, `host`, `path`, `query`, `fragment` - read via the new
+The relevant `QUrlPrivate` members are `port` (`int`, `-1` when absent) and six plain `QString`
+members - `scheme`, `userName`, `host`, `path`, `query`, `fragment` - read via
 `_common.qstring_text()` rather than `qstring.py`'s own `format_value()`, since these get spliced
 back together into one URL string here rather than shown individually as their own quoted value.
 `password` is deliberately never read: both the reference gdb printer and Qt's own `QDebug
@@ -272,11 +272,19 @@ operator<<(QUrl)` omit it from their default display (`QUrl::toString()` include
 This only reassembles the common `scheme://[user@]host[:port]path[?query][#fragment]` shape;
 schemes with no authority component (e.g. `mailto:foo@example.com`) aren't handled specially, on
 the same "good enough for debugging, not a full URI-spec reimplementation" basis as `qdate.py`
-skipping negative/BCE years. The reference gdb printer's own format for a valid URL is the bare
-reassembled string (no `QUrl(...)` wrapper, matching `QDate`/`QTime`'s own bare convention) and,
-for an invalid one, `<invalid>` - both confirmed against `tests/run_gdb_printers.sh`'s output,
-and both kept here since, unlike `QDate`'s invalid case, the reference's `QUrl` handling isn't
-broken.
+skipping negative/BCE years - the reference has the same gap and says so in a `TODO` of its own.
+
+One departure from the reference is deliberate: it nests both the user name and the port inside
+its "is there a host" branch, so a hostless URL loses them outright - `http://user@/path` and
+`http://:8080/path` both print as `http:///path` there (checked against
+`tests/run_gdb_printers.sh`). Here each is appended on its own terms and both survive intact, on
+the grounds that showing a component which is really there beats matching the reference byte for
+byte.
+
+The reference gdb printer's own format for a valid URL is the bare reassembled string (no
+`QUrl(...)` wrapper, matching `QDate`/`QTime`'s own bare convention) and, for an invalid one,
+`<invalid>` - both confirmed against `tests/run_gdb_printers.sh`'s output, and both kept here
+since, unlike `QDate`'s invalid case, the reference's `QUrl` handling isn't broken.
 
 `<empty>` is this printer's own addition, for a reassembly that comes out empty. It can't just
 return `""` there: an empty summary makes LLDB drop the summary and expand the struct instead,

@@ -21,7 +21,7 @@
 # "expr -- *url.d" gets from LLDB's C++ expression evaluator, just reached through the plain
 # SBValue API instead.
 #
-# QUrlPrivate's relevant members: "port" (int, -1 when absent) and five plain QString members -
+# QUrlPrivate's relevant members: "port" (int, -1 when absent) and six plain QString members -
 # "scheme", "userName", "host", "path", "query", "fragment" (read via _common.qstring_text(),
 # which returns their raw decoded text rather than qstring.py's own quoted/escaped display form,
 # since these get spliced back together into one URL string here rather than shown individually).
@@ -31,7 +31,14 @@
 # This only reassembles the common "scheme://[user@]host[:port]path[?query][#fragment]" shape;
 # schemes with no authority component (e.g. "mailto:foo@example.com") aren't handled specially,
 # on the same "good enough for debugging, not a full URI-spec reimplementation" basis as
-# qdate.py skipping negative/BCE years.
+# qdate.py skipping negative/BCE years. (The reference has the same gap, and says so: "TODO:
+# always adding // is apparently not compliant in all cases".)
+#
+# One deliberate departure from the reference: it nests both the user name and the port inside
+# its "is there a host" branch, so it drops them entirely for a hostless URL, printing
+# "http:///path" for "http://user@/path". Here they're appended on their own terms, keeping
+# "http://user@/path" and "http://:8080/path" intact - showing a component that is really there
+# beats matching the reference byte for byte.
 #
 # The reference gdb printer's own format for a valid URL is the bare re-assembled string (no
 # "QUrl(...)" wrapper, matching QDate/QTime's own bare convention) and, for an invalid one,
