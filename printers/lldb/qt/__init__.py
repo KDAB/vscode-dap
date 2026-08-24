@@ -19,6 +19,7 @@ from . import qrect
 from . import qrectf
 from . import qsize
 from . import qsizef
+from . import qstack
 from . import qstring
 from . import qstringlist
 from . import qstringview
@@ -38,6 +39,7 @@ _MODULES = (
     qlinef,
     qvector,
     qqueue,
+    qstack,
     qstring,
     qlatin1string,
     qstringlist,

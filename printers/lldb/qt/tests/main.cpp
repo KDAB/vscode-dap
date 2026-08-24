@@ -13,6 +13,7 @@
 #include <QQueue>
 #include <QRect>
 #include <QSize>
+#include <QStack>
 #include <QString>
 #include <QStringList>
 #include <QStringView>
@@ -71,6 +72,11 @@ int main()
     queue.enqueue(1);
     queue.enqueue(2);
     QQueue<int> queueEmpty;
+
+    QStack<int> stack;
+    stack.push(1);
+    stack.push(2);
+    QStack<int> stackEmpty;
 
     QString str("hello");
     QString strEmpty("");

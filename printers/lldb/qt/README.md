@@ -20,7 +20,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QSize`, `QSizeF`
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
-- `QVector`, `QList`, `QStringList`, `QQueue`
+- `QVector`, `QList`, `QStringList`, `QQueue`, `QStack`
 - `QString`
 - `QLatin1String`
 - `QStringView`
@@ -34,7 +34,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
+- Containers: `QMultiMap`, `QMultiHash`, `QSet`
   (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
   print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
@@ -147,6 +147,10 @@ its own, reusing `qvector.py`'s member access and synthetic provider unmodified.
 same way `QList`'s does, so `qqueue_summary()` doesn't need a hardcoded fallback string - and,
 unlike the `QStringList` case, the reference gdb printer keeps `QQueue`'s own name too
 (`QQueue<int> (size = 2)`, not `QList<int>`), so there's no naming disagreement to resolve here.
+
+**`QStack<T>` (`qstack.py`) is the exact same situation as `QQueue`** - `class QStack : public
+QList<T>` adding `push()`/`pop()`/`top()` but no data members of its own - so `qstack.py` is
+`qqueue.py` with the class name changed.
 
 **`QMap` and `QHash` are associative containers**, so their synthetic children are named
 `[key]` (via `SBValue.Clone("[key]")` on the value) rather than `[index]`, and, unlike `QVector`,
