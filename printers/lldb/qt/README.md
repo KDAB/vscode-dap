@@ -29,14 +29,14 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
 - `QSet`
-- `QChar`
+- `QChar`, `QUuid`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Value types: `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
+- Value types: `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
   `QPersistentModelIndex`
 
 (`QLinkedList`, also in the reference dumper's list, was deprecated in 5.15 and removed outright
@@ -215,6 +215,12 @@ Only C0 control characters get a hex escape (lowercase, using as few hex digits 
 needs - unlike `QByteArray`'s fixed 2-digit form) and non-ASCII code points get a differently
 shaped one (lowercase, 4 digits, unlike `QLatin1String`'s uppercase 4-digit one) - see
 `qchar.py`'s own comment for the exact two escape forms and their boundaries.
+
+**`QUuid` (`quuid.py`) mirrors the standard RFC 4122 GUID layout**: `data1` (`uint32`), `data2`
+(`uint16`), `data3` (`uint16`), and `data4` (`uchar[8]`, the last 8 bytes of the 128-bit value
+verbatim). The reference gdb printer's format is `QUuid({xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx})`
+(lowercase hex) - note the braces are part of its own `to_string()`, not something LLDB's
+`(QUuid)` prefix already supplies, so `quuid_summary()` includes them itself.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

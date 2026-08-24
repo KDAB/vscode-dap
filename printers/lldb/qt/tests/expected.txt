@@ -62,6 +62,8 @@
 (QChar) qc = 'A'
 (QChar) qcControl = '\x7'
 (QChar) qcNonAscii = '\u00e9'
+(QUuid) uuid = QUuid({550e8400-e29b-41d4-a716-446655440000})
+(QUuid) uuidNull = QUuid({00000000-0000-0000-0000-000000000000})
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

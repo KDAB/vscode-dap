@@ -28,6 +28,7 @@ from . import qstring
 from . import qstringlist
 from . import qstringview
 from . import qutf8stringview
+from . import quuid
 from . import qvector
 
 CATEGORY = "kdab-qt"
@@ -51,6 +52,7 @@ _MODULES = (
     qstringview,
     qutf8stringview,
     qbytearray,
+    quuid,
     qmap,
     qmultimap,
     qhash,

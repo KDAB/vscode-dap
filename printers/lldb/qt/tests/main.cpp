@@ -22,6 +22,7 @@
 #include <QStringList>
 #include <QStringView>
 #include <QUtf8StringView>
+#include <QUuid>
 #include <QVector>
 
 // The runners break here and inspect the frame above, so main() can grow new
@@ -105,6 +106,9 @@ int main()
     QChar qc('A');
     QChar qcControl(0x07);
     QChar qcNonAscii(0x00e9);
+
+    QUuid uuid("{550e8400-e29b-41d4-a716-446655440000}");
+    QUuid uuidNull;
 
     QMap<int, QString> map;
     map.insert(1, "one");
