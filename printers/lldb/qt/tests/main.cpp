@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
+#include <QByteArray>
 #include <QHash>
 #include <QHashSeed>
 #include <QLatin1String>
@@ -72,6 +73,10 @@ int main()
     QUtf8StringView u8str("hello");
     QUtf8StringView u8strEmpty("");
     QUtf8StringView u8strEscaped("he said \"hi\"\nnext");
+
+    QByteArray ba("hello");
+    QByteArray baEmpty("");
+    QByteArray baEscaped("he said \"hi\"\nnext");
 
     QMap<int, QString> map;
     map.insert(1, "one");

@@ -25,6 +25,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QLatin1String`
 - `QStringView`
 - `QUtf8StringView`
+- `QByteArray`
 - `QMap`
 - `QHash`
 
@@ -33,7 +34,6 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Strings/views: `QByteArray`
 - Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
   declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
   `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
@@ -185,6 +185,11 @@ name, so it doesn't depend on the target's C++ standard version. Confirmed empir
 way as `QLatin1String`/`QStringView`'s formats: `tests/main.cpp` builds as C++17
 (`CMakeLists.txt`'s `CMAKE_CXX_STANDARD`), which puts `QUtf8StringView`'s canonical name under
 `q_no_char8_t::` with both gcc and clang.
+
+**`QByteArray` (`qbytearray.py`) reuses `QUtf8StringView`'s `escape_bytes()` outright** rather
+than duplicating it: `QByteArray`'s own `QDebug` operator escapes byte-by-byte the same way, and
+its `d` is a `QArrayDataPointer<char>` - the same shape as `QString`'s (`d.ptr`, `d.size`; see
+`qstring.py`'s `format_value()`), just holding raw bytes instead of UTF-16 code units.
 
 ## Testing
 
