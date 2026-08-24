@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 # SPDX-License-Identifier: MIT
 
-# QString's "d" is a QArrayDataPointer<char16_t> (same shape as QVector's, see qvector.py),
-# holding "ptr" (the UTF-16 data) and "size" (qsizetype, in UTF-16 code units).
+# Quoting/escaping only: reading the text out of QString's "d" lives in _common.qstring_text(),
+# which qurl.py needs unquoted, so the layout is described (and known) in just that one place.
 
-import lldb
+from . import _common
 
 _ESCAPES = {
     0x08: "\\b",
@@ -34,21 +34,10 @@ def _escape(text):
 
 
 def format_value(valobj):
-    d = valobj.GetChildMemberWithName("d")
-    if not d.IsValid():
+    text = _common.qstring_text(valobj)
+    if text is None:
         return None
-    ptr = d.GetChildMemberWithName("ptr")
-    size = d.GetChildMemberWithName("size")
-    if not ptr.IsValid() or not size.IsValid():
-        return None
-    length = size.GetValueAsSigned()
-    if length <= 0:
-        return '""'
-    error = lldb.SBError()
-    raw = valobj.GetProcess().ReadMemory(ptr.GetValueAsUnsigned(), length * 2, error)
-    if not error.Success():
-        return None
-    return '"%s"' % _escape(raw.decode("utf-16-le", errors="replace"))
+    return '"%s"' % _escape(text)
 
 
 def qstring_summary(valobj, internal_dict):

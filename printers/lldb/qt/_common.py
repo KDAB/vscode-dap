@@ -30,9 +30,18 @@ def key_text(value):
 
 
 def qstring_text(value):
-    # Reads a QString member's raw decoded text, with none of qstring.py's own quoting/escaping -
-    # for a type (qurl.py) that needs to splice several QString members back together into one
-    # display string of its own, rather than show each one as its own quoted value.
+    # Reads a QString's raw decoded text, with none of qstring.py's own quoting/escaping. This is
+    # the one place that knows QString's layout: its "d" is a QArrayDataPointer<char16_t> (same
+    # shape as QVector's, see qvector.py), holding "ptr" (the UTF-16 data) and "size" (qsizetype,
+    # in UTF-16 code units).
+    #
+    # qstring.py's own format_value() quotes and escapes what this returns; qurl.py takes it raw,
+    # since it splices several QString members back together into one display string of its own
+    # rather than showing each as its own quoted value.
+    #
+    # Returns None if the layout isn't recognised or the text can't be read, "" for an empty
+    # QString - callers that need to tell those apart must check for None explicitly, since both
+    # are falsy.
     d = value.GetChildMemberWithName("d")
     if not d.IsValid():
         return None
