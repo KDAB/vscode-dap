@@ -12,6 +12,7 @@ from . import qlatin1string
 from . import qline
 from . import qlinef
 from . import qmap
+from . import qmultimap
 from . import qpoint
 from . import qpointf
 from . import qqueue
@@ -47,6 +48,7 @@ _MODULES = (
     qutf8stringview,
     qbytearray,
     qmap,
+    qmultimap,
     qhash,
 )
 

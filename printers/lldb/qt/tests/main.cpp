@@ -9,6 +9,7 @@
 #include <QLineF>
 #include <QList>
 #include <QMap>
+#include <QMultiMap>
 #include <QPoint>
 #include <QQueue>
 #include <QRect>
@@ -103,6 +104,12 @@ int main()
     map.insert(2, "two");
     map.insert(3, "three");
     QMap<int, QString> mapEmpty;
+
+    QMultiMap<int, QString> multiMap;
+    multiMap.insert(1, "a");
+    multiMap.insert(1, "b");
+    multiMap.insert(2, "c");
+    QMultiMap<int, QString> multiMapEmpty;
 
     QHash<int, QString> hash;
     hash.insert(1, "one");

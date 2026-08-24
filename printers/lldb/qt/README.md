@@ -26,7 +26,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QStringView`
 - `QUtf8StringView`
 - `QByteArray`
-- `QMap`
+- `QMap`, `QMultiMap`
 - `QHash`
 
 ## TODO: missing types
@@ -34,7 +34,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QMultiMap`, `QMultiHash`, `QSet`
+- Containers: `QMultiHash`, `QSet`
   (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
   print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
@@ -165,6 +165,15 @@ pointee type the way `qvector.py` does.
   `d.d.<the-shared-pointer's-only-member>`, and LLDB already ships a synthetic children provider
   for `std::map` — `_std_map()`'s `GetNumChildren()`/`GetChildAtIndex()` calls on that member
   transparently use it, giving sorted-by-key iteration for free.
+- `qmultimap.py` reuses `_std_map()` outright rather than duplicating it: `QMultiMap<Key, T>` has
+  the exact same `QExplicitlySharedDataPointerV2<QMapData<...>>` layout as `QMap<Key, T>`, the
+  only difference being that the `m` member it reaches through is a `std::multimap` rather than a
+  `std::map` - and LLDB's own synthetic children provider for `std::multimap` exposes the same
+  `GetNumChildren()`/`GetChildAtIndex()` interface `std::map`'s does, so no new traversal code is
+  needed. A repeated key's values come out most-recently-inserted-first, because that's the order
+  `QMultiMap::insert()` itself builds the underlying tree in (each insert lands at the front of
+  that key's run) - walking the raw tree in storage order reproduces it for free, same as
+  `QHash`'s bucket order does for `QHash` itself.
 - `qhash.py` has no equivalent to lean on: `QHash<Key, T>`'s `d` is a
   `QHashPrivate::Data<Node>*`, split into `Span`s of 128 buckets each (`SpanConstants` in
   qtbase's `qhash.h`), and there's no built-in LLDB formatter for that layout. `_nodes()` walks

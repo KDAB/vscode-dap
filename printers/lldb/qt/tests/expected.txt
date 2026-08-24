@@ -65,6 +65,12 @@
   [3] = "three"
 }
 (QMap<int, QString>) mapEmpty = QMap<int, QString> (size = 0) {}
+(QMultiMap<int, QString>) multiMap = QMultiMap<int, QString> (size = 3) {
+  [1] = "b"
+  [1] = "a"
+  [2] = "c"
+}
+(QMultiMap<int, QString>) multiMapEmpty = QMultiMap<int, QString> (size = 0) {}
 (QHash<int, QString>) hash = QHash<int, QString> (size = 3) {
   [3] = "three"
   [1] = "one"
