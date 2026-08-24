@@ -67,6 +67,9 @@
 (QDate) date = 2024-03-15
 (QDate) dateSingleDigit = 2024-01-05
 (QDate) dateInvalid = QDate(Invalid)
+(QTime) time = 13:45:30.500
+(QTime) timeMidnight = 00:00:00.000
+(QTime) timeInvalid = invalid QTime
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

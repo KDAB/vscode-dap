@@ -29,17 +29,15 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
 - `QSet`
-- `QChar`, `QUuid`, `QDate`
+- `QChar`, `QUuid`, `QDate`, `QTime`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Value types: `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`, `QPersistentModelIndex`
+- Value types: `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`, `QPersistentModelIndex`
 
-(`QLinkedList`, also in the reference dumper's list, was deprecated in 5.15 and removed outright
-in Qt6, so there's nothing left to print for it.)
 - CBOR: `QCborArray`, `QCborMap`, `QCborValue`, `QCborValueRef`/`QCborValueConstRef`,
   `QCborSimpleType`
 - JSON: `QJsonArray`, `QJsonObject`, `QJsonDocument`, `QJsonValue`,
@@ -239,6 +237,15 @@ convention (`QTime`'s reference format, below, uses the same bare style). Its ha
 sensible fallback, so `qdate.py` uses real Qt's own `QDebug` text (`QDate(Invalid)`) for that one
 case instead - pinned down the same way as `QLatin1String`/`QStringView`'s formats, by compiling
 and running `qDebug() << value` against a real Qt build.
+
+**`QTime` (`qtime.py`) stores milliseconds-since-midnight in `mds`** (`int`), so converting to
+`HH:mm:ss.zzz` is plain arithmetic - no calendar math needed, unlike `QDate`'s. An invalid
+`QTime` stores `-1` there rather than using a separate validity flag. The reference gdb printer
+uses the same bare-string convention `QDate`'s does for a valid time (`13:45:30.500`, no
+`QTime(...)` wrapper), and, unlike `QDate`'s broken handling of its invalid case, `QTime`'s
+reference handling of an invalid value is already sensible (`invalid QTime`, no garbage) - so
+that text is kept as-is here too, rather than falling back to real `QDebug`'s own
+`QTime(Invalid)` the way `qdate.py` does for `QDate`.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

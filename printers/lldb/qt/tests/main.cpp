@@ -22,6 +22,7 @@
 #include <QString>
 #include <QStringList>
 #include <QStringView>
+#include <QTime>
 #include <QUtf8StringView>
 #include <QUuid>
 #include <QVector>
@@ -114,6 +115,10 @@ int main()
     QDate date(2024, 3, 15);
     QDate dateSingleDigit(2024, 1, 5);
     QDate dateInvalid;
+
+    QTime time(13, 45, 30, 500);
+    QTime timeMidnight(0, 0, 0, 0);
+    QTime timeInvalid;
 
     QMap<int, QString> map;
     map.insert(1, "one");

@@ -28,6 +28,7 @@ from . import qstack
 from . import qstring
 from . import qstringlist
 from . import qstringview
+from . import qtime
 from . import qutf8stringview
 from . import quuid
 from . import qvector
@@ -55,6 +56,7 @@ _MODULES = (
     qbytearray,
     quuid,
     qdate,
+    qtime,
     qmap,
     qmultimap,
     qhash,
