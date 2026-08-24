@@ -5,9 +5,11 @@
 # QUrlPrivate itself is defined only in qtbase's qurl.cpp, never in any header - unlike every
 # other type here, whose layout comes from a header the debuggee's own translation unit
 # includes, LLDB can only see QUrlPrivate's members if QtCore's own shared library carries debug
-# info for them. Confirmed present in both a from-source Qt 6.10.2 build and Ubuntu's packaged
-# qt6-base-dev, so this isn't the edge case it might sound like, but a sufficiently stripped Qt
-# install would make format_value() return None, same as any other "unrecognised layout" case -
+# info for them. A from-source Qt build does; a stripped one doesn't, and that covers most
+# packaged Qt installs - Ubuntu's qt6-base-dev keeps those symbols in a separate -dbgsym package,
+# and Qt's own binaries in the separately-installable "debug_info" module (which is why
+# .github/workflows/test-printers.yml installs Qt through aqtinstall rather than from apt). With
+# a stripped Qt, format_value() returns None, same as any other "unrecognised layout" case -
 # falling back to the default struct display of the raw "d" pointer rather than anything actively
 # wrong.
 #
