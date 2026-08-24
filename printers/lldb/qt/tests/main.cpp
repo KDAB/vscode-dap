@@ -120,6 +120,9 @@ int main()
     QTime time(13, 45, 30, 500);
     QTime timeMidnight(0, 0, 0, 0);
     QTime timeInvalid;
+    // Out of range, so invalid, but not the canonical -1 a default-constructed QTime holds.
+    QTime timeOutOfRange = QTime::fromMSecsSinceStartOfDay(90000000);
+    QTime timeNegative = QTime::fromMSecsSinceStartOfDay(-2);
 
     QUrl url("https://user:pass@example.com:8080/path/to/thing?query=1&x=2#frag");
     QUrl urlSimple("https://example.com/");

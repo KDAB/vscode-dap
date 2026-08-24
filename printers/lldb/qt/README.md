@@ -239,13 +239,20 @@ case instead - pinned down the same way as `QLatin1String`/`QStringView`'s forma
 and running `qDebug() << value` against a real Qt build.
 
 **`QTime` (`qtime.py`) stores milliseconds-since-midnight in `mds`** (`int`), so converting to
-`HH:mm:ss.zzz` is plain arithmetic - no calendar math needed, unlike `QDate`'s. An invalid
-`QTime` stores `-1` there rather than using a separate validity flag. The reference gdb printer
-uses the same bare-string convention `QDate`'s does for a valid time (`13:45:30.500`, no
-`QTime(...)` wrapper), and, unlike `QDate`'s broken handling of its invalid case, `QTime`'s
-reference handling of an invalid value is already sensible (`invalid QTime`, no garbage) - so
-that text is kept as-is here too, rather than falling back to real `QDebug`'s own
-`QTime(Invalid)` the way `qdate.py` does for `QDate`.
+`HH:mm:ss.zzz` is plain arithmetic - no calendar math needed, unlike `QDate`'s. There's no
+separate validity flag: a default-constructed `QTime` stores `-1` there, and `QTime::isValid()`
+is just a range check on that one value (`uint(mds) < MSECS_PER_DAY`), so anything negative or
+past the end of a day is invalid too, not only the canonical `-1`. `qtime.py` uses that same
+range check, where the reference gdb printer tests `mds == -1` alone and prints garbage clock
+readings for the rest of the invalid range (`25:00:00.000` for `90000000`, `-1:59:59.998` for
+`-2`, both of which real `QDebug` calls `QTime(Invalid)`) - the same sort of breakage `qdate.py`
+already declines to reproduce for `QDate`. Uninitialised memory reaches a debugger far more often
+than it reaches a program, which is what makes the wider range worth honouring.
+
+The reference's format is otherwise kept: the same bare-string convention `QDate`'s uses for a
+valid time (`13:45:30.500`, no `QTime(...)` wrapper), and its `invalid QTime` text, which - unlike
+`QDate`'s broken invalid case - is already sensible, so there's nothing to gain from falling back
+to real `QDebug`'s own `QTime(Invalid)` the way `qdate.py` does for `QDate`.
 
 **`QUrl` (`qurl.py`) is a different situation from every other type here**: its only member is
 `d` (a `QUrlPrivate *`, null for a default-constructed/invalid `QUrl`), and `QUrlPrivate` itself
