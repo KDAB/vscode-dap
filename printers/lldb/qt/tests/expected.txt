@@ -23,3 +23,6 @@
   [2] = 3
 }
 (QVector) vecEmpty = QVector<int> (size = 0) {}
+(QString) str = "hello"
+(QString) strEmpty = ""
+(QString) strEscaped = "he said \"hi\"\nnext"

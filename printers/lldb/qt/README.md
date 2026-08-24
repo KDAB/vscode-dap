@@ -21,6 +21,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
 - `QVector`
+- `QString`
 
 ## Adding a type
 

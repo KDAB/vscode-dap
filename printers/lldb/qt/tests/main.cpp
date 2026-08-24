@@ -6,6 +6,7 @@
 #include <QPoint>
 #include <QRect>
 #include <QSize>
+#include <QString>
 #include <QVector>
 
 // The runners break here and inspect the frame above, so main() can grow new
@@ -45,6 +46,10 @@ int main()
 
     QVector<int> vec = {1, 2, 3};
     QVector<int> vecEmpty;
+
+    QString str("hello");
+    QString strEmpty("");
+    QString strEscaped("he said \"hi\"\nnext");
 
     stopHere();
     return 0;
