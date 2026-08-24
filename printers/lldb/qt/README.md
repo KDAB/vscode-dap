@@ -27,14 +27,14 @@ enables that category. To load automatically, add the `command script import` li
 - `QUtf8StringView`
 - `QByteArray`
 - `QMap`, `QMultiMap`
-- `QHash`
+- `QHash`, `QMultiHash`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QMultiHash`, `QSet`
+- Containers: `QSet`
   (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
   print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
@@ -182,6 +182,18 @@ pointee type the way `qvector.py` does.
   order. That order depends on the hash seed rather than insertion order, so
   `tests/main.cpp` calls `QHashSeed::setDeterministicGlobalSeed()` before populating its
   `QHash` fixture — without it, `expected.txt`'s `[key]` order would vary from run to run.
+
+**`QMultiHash<Key, T>` (`qmultihash.py`) reuses `qhash.py`'s `_nodes()` outright** for the same
+reason `qmultimap.py` reuses `qmap.py`'s `_std_map()`: its `d` is the exact same
+`QHashPrivate::Data<Node>*` span/bucket layout, just with `Node = QHashPrivate::MultiNode<Key,
+T>` instead of the plain `Node<Key, T>` - a bucket only ever holds one `Node` no matter how many
+values its key has accumulated, so bucket-order traversal is unaffected. What's different is that
+a `MultiNode`'s `value` isn't `T` itself but a `Chain *` (`QHashPrivate::MultiNodeChain<T>`), a
+singly linked list built by `QMultiHash::insertMulti()` always inserting the new value as the
+list's new head - so `qmultihash.py`'s own `_entries()` walks each node's chain in addition to
+`_nodes()`'s bucket walk, flattening bucket-order-then-chain-order into one list of `(key, value)`
+pairs. Chain order comes out most-recently-inserted-first as a consequence, matching
+`QMultiHash`'s own documented iteration order (and `QDebug`'s).
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

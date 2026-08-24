@@ -12,6 +12,7 @@ from . import qlatin1string
 from . import qline
 from . import qlinef
 from . import qmap
+from . import qmultihash
 from . import qmultimap
 from . import qpoint
 from . import qpointf
@@ -50,6 +51,7 @@ _MODULES = (
     qmap,
     qmultimap,
     qhash,
+    qmultihash,
 )
 
 

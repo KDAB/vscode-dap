@@ -77,6 +77,12 @@
   [2] = "two"
 }
 (QHash<int, QString>) hashEmpty = QHash<int, QString> (size = 0) {}
+(QMultiHash<int, QString>) multiHash = QMultiHash<int, QString> (size = 3) {
+  [1] = "b"
+  [1] = "a"
+  [2] = "c"
+}
+(QMultiHash<int, QString>) multiHashEmpty = QMultiHash<int, QString> (size = 0) {}
 (QMap<QString, int>) mapStringKey = QMap<QString, int> (size = 2) {
   ["apple"] = 1
   ["banana"] = 2
