@@ -22,6 +22,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QLine`, `QLineF`
 - `QVector`
 - `QString`
+- `QMap`
 
 ## Adding a type
 

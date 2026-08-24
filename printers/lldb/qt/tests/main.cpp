@@ -3,6 +3,7 @@
 
 #include <QLine>
 #include <QLineF>
+#include <QMap>
 #include <QPoint>
 #include <QRect>
 #include <QSize>
@@ -50,6 +51,12 @@ int main()
     QString str("hello");
     QString strEmpty("");
     QString strEscaped("he said \"hi\"\nnext");
+
+    QMap<int, QString> map;
+    map.insert(1, "one");
+    map.insert(2, "two");
+    map.insert(3, "three");
+    QMap<int, QString> mapEmpty;
 
     stopHere();
     return 0;
