@@ -13,6 +13,7 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QStringView>
 #include <QUtf8StringView>
 #include <QVector>
@@ -61,6 +62,9 @@ int main()
 
     QList<int> list = {1, 2, 3};
     QList<int> listEmpty;
+
+    QStringList sl = {"one", "two"};
+    QStringList slEmpty;
 
     QString str("hello");
     QString strEmpty("");

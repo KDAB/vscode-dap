@@ -29,6 +29,11 @@
   [2] = 3
 }
 (QList<int>) listEmpty = QList<int> (size = 0) {}
+(QStringList) sl = QStringList (size = 2) {
+  [0] = "one"
+  [1] = "two"
+}
+(QStringList) slEmpty = QStringList (size = 0) {}
 (QString) str = "hello"
 (QString) strEmpty = ""
 (QString) strEscaped = "he said \"hi\"\nnext"

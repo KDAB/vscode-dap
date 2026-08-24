@@ -20,7 +20,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QSize`, `QSizeF`
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
-- `QVector`, `QList`
+- `QVector`, `QList`, `QStringList`
 - `QString`
 - `QLatin1String`
 - `QStringView`
@@ -34,7 +34,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QStringList`, `QQueue`, `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
+- Containers: `QQueue`, `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
   (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
   print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
@@ -129,6 +129,16 @@ case still needs reconstructing from the element pointer's type. The reference g
 actually collapses a `QStringList` down to a generic `QList<QString>` when displaying it (see
 `qstringlist.py`'s own paragraph) - this module's approach of preferring the value's actual
 declared name over the reference's naming choice is deliberate and applies there too.
+
+**`QStringList` (`qstringlist.py`) is `class QStringList : public QList<QString>`** - a real
+subclass adding string-specific methods but no data members of its own, so its layout is exactly
+`QList<QString>`'s. LLDB's `GetChildMemberWithName()` already searches base classes for a member
+it doesn't find directly, so `qvector.py`'s `_real_members()` and `QVectorSyntheticProvider` work
+on a `QStringList` value completely unmodified; `qstringlist.py` only supplies its own summary
+text and registers both under `^QStringList$`. The reference gdb printer, as mentioned above,
+prints a `QStringList` as a generic `QList<QString>` rather than keeping its own name; this
+prints `QStringList (size = N)` instead, on the view that a Qt developer looking at their own
+`QStringList` variable in the debugger would rather see the type they actually wrote.
 
 **`QMap` and `QHash` are associative containers**, so their synthetic children are named
 `[key]` (via `SBValue.Clone("[key]")` on the value) rather than `[index]`, and, unlike `QVector`,
