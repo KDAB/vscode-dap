@@ -7,6 +7,7 @@
 #include <QLatin1String>
 #include <QLine>
 #include <QLineF>
+#include <QList>
 #include <QMap>
 #include <QPoint>
 #include <QRect>
@@ -57,6 +58,9 @@ int main()
 
     QVector<int> vec = {1, 2, 3};
     QVector<int> vecEmpty;
+
+    QList<int> list = {1, 2, 3};
+    QList<int> listEmpty;
 
     QString str("hello");
     QString strEmpty("");

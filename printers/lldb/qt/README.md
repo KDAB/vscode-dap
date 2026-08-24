@@ -20,7 +20,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QSize`, `QSizeF`
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
-- `QVector`
+- `QVector`, `QList`
 - `QString`
 - `QLatin1String`
 - `QStringView`
@@ -34,9 +34,9 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
-  declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
-  `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
+- Containers: `QStringList`, `QQueue`, `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
+  (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
+  print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
   `QPersistentModelIndex`
 - CBOR: `QCborArray`, `QCborMap`, `QCborValue`, `QCborValueRef`/`QCborValueConstRef`,
@@ -115,8 +115,20 @@ under the same regex, so the value can be expanded to see its elements. Two thin
 Also, in Qt6 `QVector<T>` is literally `using QVector = QList<T>;` (no distinct ABI type at all),
 and compilers disagree on what type name they leave in the debug info for such an alias: gcc
 reports the bare typedef name (`QVector`, no template argument), clang reports the canonical name
-(`QVector<int>`). `qvector.py`'s regex (`^QVector(<.*>)?$`) matches both; check this if a future
-alias-template type (there may be others) behaves unexpectedly on one toolchain but not the other.
+(`QVector<int>`). `qvector.py`'s regex (`^Q(Vector|List)(<.*>)?$`) matches both spellings of the
+alias, plus a variable declared directly as `QList<T>` (which, being the real class rather than an
+alias, always carries its template argument regardless of compiler - only the bare `QVector`
+spelling needs `qvector_summary()`'s element-type fallback). Watch for the same
+one-name-or-two-depending-on-the-compiler issue on any future alias-template type.
+
+`qvector_summary()` reads the container's own declared name off `GetNonSyntheticValue().GetType().GetName()`
+rather than hardcoding `"QVector<%s>"`, so `QList<int>` prints as `QList<int> (size = N)` and
+`QQueue`/`QStack` (see their own paragraphs further down, which reuse this module's functions
+rather than duplicating them) get to keep their own names too - only the bare-alias `"QVector"`
+case still needs reconstructing from the element pointer's type. The reference gdb printer
+actually collapses a `QStringList` down to a generic `QList<QString>` when displaying it (see
+`qstringlist.py`'s own paragraph) - this module's approach of preferring the value's actual
+declared name over the reference's naming choice is deliberate and applies there too.
 
 **`QMap` and `QHash` are associative containers**, so their synthetic children are named
 `[key]` (via `SBValue.Clone("[key]")` on the value) rather than `[index]`, and, unlike `QVector`,

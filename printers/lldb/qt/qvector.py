@@ -10,6 +10,12 @@
 # itself: gcc collapses it to a bare "QVector" typedef with no template
 # arguments, while clang keeps "QVector<int>" verbatim. Both forms are
 # matched below.
+#
+# This module also registers for QList itself: a variable actually declared as QList<T> (rather
+# than through the QVector alias) has the exact same layout and just wasn't matched by the
+# regex before. QList is a real class template, not an alias, so its own name always carries the
+# template argument regardless of compiler - only QVector's bare-alias spelling needs the
+# element-type fallback in qvector_summary() below.
 
 
 def _real_members(valobj):
@@ -36,9 +42,14 @@ def qvector_summary(valobj, internal_dict):
         # "None" rather than falling back to the default struct display.
         return ""
     ptr, size = members
-    element_type_name = ptr.GetType().GetPointeeType().GetName()
+    type_name = valobj.GetNonSyntheticValue().GetType().GetName()
+    if not type_name:
+        return ""
+    if type_name == "QVector":
+        # gcc's bare alias typedef carries no template argument of its own to read.
+        type_name = "QVector<%s>" % ptr.GetType().GetPointeeType().GetName()
     # matches the reference gdb printer's QVectorPrinter.to_string()
-    return "QVector<%s> (size = %d)" % (element_type_name, size.GetValueAsSigned())
+    return "%s (size = %d)" % (type_name, size.GetValueAsSigned())
 
 
 class QVectorSyntheticProvider:
@@ -82,9 +93,10 @@ class QVectorSyntheticProvider:
 
 def register(debugger, category):
     debugger.HandleCommand(
-        'type summary add -w %s -e -F qt.qvector.qvector_summary -x "^QVector(<.*>)?$"' % category
+        'type summary add -w %s -e -F qt.qvector.qvector_summary -x "^Q(Vector|List)(<.*>)?$"'
+        % category
     )
     debugger.HandleCommand(
-        'type synthetic add -w %s -l qt.qvector.QVectorSyntheticProvider -x "^QVector(<.*>)?$"'
+        'type synthetic add -w %s -l qt.qvector.QVectorSyntheticProvider -x "^Q(Vector|List)(<.*>)?$"'
         % category
     )
