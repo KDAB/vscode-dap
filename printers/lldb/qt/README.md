@@ -22,6 +22,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QLine`, `QLineF`
 - `QVector`
 - `QString`
+- `QLatin1String`
 - `QMap`
 - `QHash`
 
@@ -30,7 +31,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Strings/views: `QLatin1String`, `QStringView`, `QUtf8StringView`, `QByteArray`
+- Strings/views: `QStringView`, `QUtf8StringView`, `QByteArray`
 - Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
   declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
   `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
@@ -136,6 +137,22 @@ pointee type the way `qvector.py` does.
   order. That order depends on the hash seed rather than insertion order, so
   `tests/main.cpp` calls `QHashSeed::setDeterministicGlobalSeed()` before populating its
   `QHash` fixture — without it, `expected.txt`'s `[key]` order would vary from run to run.
+
+**`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
+from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running
+`qDebug() << value` against a real Qt build (see "Adding a type" above). `QLatin1String` is
+`using QLatin1String = QLatin1StringView;` (qstringfwd.h; both gcc and clang report the alias
+name, not the canonical one, so `qlatin1string.py`'s regex is the plain `^QLatin1String$`), whose
+two members are `m_data` (`const char *`) and `m_size` (`qsizetype`). Its `QDebug` operator is
+byte-oriented and treats any byte outside printable ASCII, including the upper half of Latin-1,
+as needing a 4-digit-uppercase-hex Unicode escape. This is a real difference from
+`QString`/`QStringView`'s own `QDebug` operator (see `qstringview.py`), which only escapes C0
+control characters and DEL and prints the rest of Unicode as literal text: an accented character
+that a `QString` prints verbatim comes out backslash-u-escaped from the equivalent
+`QLatin1String` bytes. (`qstring.py`'s own escaping helper predates this investigation and
+escapes every byte at or above the DEL character the same way `QLatin1String` does, which doesn't
+actually match real `QString`/`QDebug` output for non-ASCII text — a pre-existing divergence, out
+of scope here since it isn't exercised by `tests/main.cpp`'s ASCII-only `QString` fixtures.)
 
 ## Testing
 

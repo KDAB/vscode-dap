@@ -26,6 +26,9 @@
 (QString) str = "hello"
 (QString) strEmpty = ""
 (QString) strEscaped = "he said \"hi\"\nnext"
+(QLatin1String) l1str = "hello"
+(QLatin1String) l1strEmpty = ""
+(QLatin1String) l1strEscaped = "he said \"hi\"\nnext"
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

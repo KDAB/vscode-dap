@@ -3,6 +3,7 @@
 
 #include <QHash>
 #include <QHashSeed>
+#include <QLatin1String>
 #include <QLine>
 #include <QLineF>
 #include <QMap>
@@ -57,6 +58,10 @@ int main()
     QString str("hello");
     QString strEmpty("");
     QString strEscaped("he said \"hi\"\nnext");
+
+    QLatin1String l1str("hello");
+    QLatin1String l1strEmpty("");
+    QLatin1String l1strEscaped("he said \"hi\"\nnext");
 
     QMap<int, QString> map;
     map.insert(1, "one");
