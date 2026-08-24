@@ -70,6 +70,9 @@
 (QTime) time = 13:45:30.500
 (QTime) timeMidnight = 00:00:00.000
 (QTime) timeInvalid = invalid QTime
+(QUrl) url = https://user@example.com:8080/path/to/thing?query=1&x=2#frag
+(QUrl) urlSimple = https://example.com/
+(QUrl) urlInvalid = <invalid>
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

@@ -23,6 +23,7 @@
 #include <QStringList>
 #include <QStringView>
 #include <QTime>
+#include <QUrl>
 #include <QUtf8StringView>
 #include <QUuid>
 #include <QVector>
@@ -119,6 +120,10 @@ int main()
     QTime time(13, 45, 30, 500);
     QTime timeMidnight(0, 0, 0, 0);
     QTime timeInvalid;
+
+    QUrl url("https://user:pass@example.com:8080/path/to/thing?query=1&x=2#frag");
+    QUrl urlSimple("https://example.com/");
+    QUrl urlInvalid;
 
     QMap<int, QString> map;
     map.insert(1, "one");

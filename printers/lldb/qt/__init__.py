@@ -29,6 +29,7 @@ from . import qstring
 from . import qstringlist
 from . import qstringview
 from . import qtime
+from . import qurl
 from . import qutf8stringview
 from . import quuid
 from . import qvector
@@ -57,6 +58,7 @@ _MODULES = (
     quuid,
     qdate,
     qtime,
+    qurl,
     qmap,
     qmultimap,
     qhash,

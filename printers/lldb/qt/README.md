@@ -29,14 +29,14 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
 - `QSet`
-- `QChar`, `QUuid`, `QDate`, `QTime`
+- `QChar`, `QUuid`, `QDate`, `QTime`, `QUrl`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Value types: `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`, `QPersistentModelIndex`
+- Value types: `QDateTime`, `QTimeZone`, `QVariant`, `QPersistentModelIndex`
 
 - CBOR: `QCborArray`, `QCborMap`, `QCborValue`, `QCborValueRef`/`QCborValueConstRef`,
   `QCborSimpleType`
@@ -246,6 +246,56 @@ uses the same bare-string convention `QDate`'s does for a valid time (`13:45:30.
 reference handling of an invalid value is already sensible (`invalid QTime`, no garbage) - so
 that text is kept as-is here too, rather than falling back to real `QDebug`'s own
 `QTime(Invalid)` the way `qdate.py` does for `QDate`.
+
+**`QUrl` (`qurl.py`) is a different situation from every other type here**: its only member is
+`d` (a `QUrlPrivate *`, null for a default-constructed/invalid `QUrl`), and `QUrlPrivate` itself
+is defined *only* inside qtbase's `qurl.cpp` - never in any header. Every other type's layout
+comes from a header the debuggee's own translation unit includes, so the debug info LLDB needs
+comes from the debuggee regardless of how Qt's shared library itself was built; `QUrlPrivate` has
+no such header, so LLDB can only see its members if `libQt6Core`'s *own* debug info describes
+them. Confirmed present both in a from-source Qt 6.10.2 build and in Ubuntu's packaged
+`qt6-base-dev` (checked directly - installed it, built a throwaway fixture against it, inspected
+`*url.d` under LLDB, purged it again), so this isn't the edge case it might sound like for a
+typical Linux setup. A sufficiently stripped Qt install would just make every
+`GetChildMemberWithName()` in `format_value()` fail and it return `None`, same as any other
+"unrecognised layout" case - falling back to the default struct display of the raw `d` pointer,
+not anything actively wrong.
+
+The relevant `QUrlPrivate` members are `port` (`int`, `-1` when absent) and five plain `QString`
+members - `scheme`, `userName`, `host`, `path`, `query`, `fragment` - read via the new
+`_common.qstring_text()` rather than `qstring.py`'s own `format_value()`, since these get spliced
+back together into one URL string here rather than shown individually as their own quoted value.
+`password` is deliberately never read: both the reference gdb printer and Qt's own `QDebug
+operator<<(QUrl)` omit it from their default display (`QUrl::toString()` includes it; the
+`QDebug` operator doesn't), so this follows suit rather than leaking it into a debugger view.
+
+This only reassembles the common `scheme://[user@]host[:port]path[?query][#fragment]` shape;
+schemes with no authority component (e.g. `mailto:foo@example.com`) aren't handled specially, on
+the same "good enough for debugging, not a full URI-spec reimplementation" basis as `qdate.py`
+skipping negative/BCE years. The reference gdb printer's own format for a valid URL is the bare
+reassembled string (no `QUrl(...)` wrapper, matching `QDate`/`QTime`'s own bare convention) and,
+for an invalid one, `<invalid>` - both confirmed against `tests/run_gdb_printers.sh`'s output,
+and both kept here since, unlike `QDate`'s invalid case, the reference's `QUrl` handling isn't
+broken.
+
+Two more things bite here, both toolchain-dependent rather than bugs:
+
+- Plain `SBValue.Dereference()` on `d` doesn't work: it resolves against the pointee type as the
+  debuggee's own translation unit saw it, which - `QUrlPrivate` never being defined in any header
+  it could have included - is just an incomplete forward declaration, so `Dereference()` returns
+  an invalid value even when `libQt6Core`'s debug info fully describes the type.
+  `SBTarget.FindFirstType()` instead searches every loaded module's debug info (including
+  `libQt6Core`'s own) for a complete definition, and `CreateValueFromAddress()` builds a
+  properly-typed value at `d`'s address from that - the same completion an interactive `expr --
+  *url.d` gets from LLDB's own C++ expression evaluator, just reached through the plain `SBValue`
+  API `qurl_summary()` has to use instead.
+- Under clang (unlike gcc), `QUrl` itself - not just `QUrlPrivate` - comes out as an incomplete
+  type in the debuggee's own DWARF (`frame variable` shows `<incomplete type "QUrl">`, with no
+  chance for a registered summary to even run), most likely because clang's `-flimit-debug-info`
+  defers to whichever translation unit owns `QUrl`'s complete definition rather than duplicating
+  it locally. This only matters for a clang-compiled debuggee - `tests/main.cpp` and CI both only
+  ever build with gcc - and it degrades the same way missing `QUrlPrivate` info would: no crash,
+  just no printer output for that value.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

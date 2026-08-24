@@ -27,3 +27,24 @@ def key_text(value):
     # their own, only a summary, so fall back to that - which also means the key gets whatever
     # quoting/formatting its own registered summary uses (e.g. QString's surrounding quotes).
     return value.GetValue() or value.GetSummary() or "?"
+
+
+def qstring_text(value):
+    # Reads a QString member's raw decoded text, with none of qstring.py's own quoting/escaping -
+    # for a type (qurl.py) that needs to splice several QString members back together into one
+    # display string of its own, rather than show each one as its own quoted value.
+    d = value.GetChildMemberWithName("d")
+    if not d.IsValid():
+        return None
+    ptr = d.GetChildMemberWithName("ptr")
+    size = d.GetChildMemberWithName("size")
+    if not ptr.IsValid() or not size.IsValid():
+        return None
+    length = size.GetValueAsSigned()
+    if length <= 0:
+        return ""
+    error = lldb.SBError()
+    raw = value.GetProcess().ReadMemory(ptr.GetValueAsUnsigned(), length * 2, error)
+    if not error.Success():
+        return None
+    return raw.decode("utf-16-le", errors="replace")
