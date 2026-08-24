@@ -37,6 +37,13 @@ Nothing here is public gdb API, so every step is defensive: any surprise leaves
 gdb's own behaviour in place rather than breaking the session. Diagnostics go to
 gdb's DAP log (`set debug dap-log-file`, i.e. the extension's `kdap.logPath`) -
 never to stdout, which in DAP mode is the protocol stream.
+
+gdb 17 renamed VariableReference's "printer" and "child_cache" attributes to
+"_printer" and "_child_cache" (upstream commit dd2d4de349f, "gdb/python/dap:
+prefix internal attributes with underscore") without a deprecated alias, so a
+gdb 16 and a gdb 17+ instance don't have the same attribute under either name.
+_printer_of()/_child_cache_get()/_child_cache_set() below read whichever one
+the running gdb actually has instead of hard-coding one spelling.
 """
 
 import gdb
@@ -67,6 +74,24 @@ def _is_map_printer(printer):
     except Exception:
         # A printer that throws from display_hint() is gdb's problem, not ours.
         return False
+
+
+def _printer_of(instance):
+    """INSTANCE's pretty printer, under whichever attribute name this gdb uses."""
+    return instance._printer if hasattr(instance, "_printer") else instance.printer
+
+
+def _child_cache_get(instance):
+    """INSTANCE's cached paired children, under whichever attribute name this gdb uses."""
+    return instance._child_cache if hasattr(instance, "_child_cache") else instance.child_cache
+
+
+def _child_cache_set(instance, value):
+    """Sets INSTANCE's cached paired children, under whichever attribute name this gdb uses."""
+    if hasattr(instance, "_child_cache"):
+        instance._child_cache = value
+    else:
+        instance.child_cache = value
 
 
 def _child_name(key):
@@ -157,22 +182,24 @@ def _install():
     # in an original anyway, so the assertion is not worth re-stating here.
 
     def cache_children(self):
-        if self.child_cache is None and _is_map_printer(self.printer):
-            self.child_cache = _paired_children(self.printer)
+        printer = _printer_of(self)
+        if _child_cache_get(self) is None and _is_map_printer(printer):
+            _child_cache_set(self, _paired_children(printer))
         return orig_cache_children(self)
 
     def child_count(self):
         # -1 is varref.py's "has children, not counted yet"; any other value is
         # either already computed or None for "no children at all".
-        if self.count == -1 and _is_map_printer(self.printer):
-            flat = _flat_child_count(self.printer)
+        printer = _printer_of(self)
+        if self.count == -1 and _is_map_printer(printer):
+            flat = _flat_child_count(printer)
             # A printer that can't say (Qt's QMap on Qt6 with no std::map
             # printer available returns None) leaves counting to the pairing.
             self.count = flat // 2 if flat is not None else len(self.cache_children())
         return orig_child_count(self)
 
     def fetch_one_child(self, idx):
-        if not _is_map_printer(self.printer):
+        if not _is_map_printer(_printer_of(self)):
             return orig_fetch_one_child(self, idx)
         # Deliberately not the printer's own child(idx): for a map-hinted
         # printer that index addresses a half-entry, not an entry.
