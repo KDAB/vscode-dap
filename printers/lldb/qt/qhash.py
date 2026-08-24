@@ -10,6 +10,8 @@
 # seed, not insertion order, so QHashSeed::setDeterministicGlobalSeed() matters for
 # reproducing a specific order (see tests/main.cpp).
 
+from . import _common
+
 _SPAN_ENTRIES = 128  # QHashPrivate::SpanConstants::NEntries (1 << SpanShift, SpanShift == 7)
 _UNUSED_ENTRY = 0xFF  # QHashPrivate::SpanConstants::UnusedEntry
 
@@ -74,7 +76,8 @@ class QHashSyntheticProvider:
 
     def get_child_index(self, name):
         for i, node in enumerate(self.nodes):
-            if name == "[%s]" % node.GetChildMemberWithName("key").GetValue():
+            key = _common.key_text(node.GetChildMemberWithName("key"))
+            if name == "[%s]" % key:
                 return i
         return -1
 
@@ -82,7 +85,7 @@ class QHashSyntheticProvider:
         if index < 0 or index >= len(self.nodes):
             return None
         node = self.nodes[index]
-        key = node.GetChildMemberWithName("key").GetValue()
+        key = _common.key_text(node.GetChildMemberWithName("key"))
         return node.GetChildMemberWithName("value").Clone("[%s]" % key)
 
 

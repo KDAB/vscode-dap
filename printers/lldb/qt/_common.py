@@ -19,3 +19,11 @@ def checked_int(value):
 def double(value):
     error = lldb.SBError()
     return value.GetData().GetDouble(error, 0)
+
+
+def key_text(value):
+    # Used for a container's bracketed "[key]" child name (qmap.py, qhash.py). GetValue() only
+    # returns text for scalar types (ints, ...); aggregate keys like QString have no value of
+    # their own, only a summary, so fall back to that - which also means the key gets whatever
+    # quoting/formatting its own registered summary uses (e.g. QString's surrounding quotes).
+    return value.GetValue() or value.GetSummary() or "?"

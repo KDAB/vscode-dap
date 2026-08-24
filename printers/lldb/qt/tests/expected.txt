@@ -38,3 +38,11 @@
   [2] = "two"
 }
 (QHash<int, QString>) hashEmpty = QHash<int, QString> (size = 0) {}
+(QMap<QString, int>) mapStringKey = QMap<QString, int> (size = 2) {
+  ["apple"] = 1
+  ["banana"] = 2
+}
+(QHash<QString, int>) hashStringKey = QHash<QString, int> (size = 2) {
+  ["banana"] = 2
+  ["apple"] = 1
+}

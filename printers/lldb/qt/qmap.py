@@ -9,6 +9,8 @@
 # GetChildAtIndex() already return that std::map's [i] = {first, second} pairs), which keeps
 # QMap's iteration order (sorted by key) for free.
 
+from . import _common
+
 
 def _std_map(valobj):
     real = valobj.GetNonSyntheticValue()
@@ -54,7 +56,7 @@ class QMapSyntheticProvider:
         if self.m is None:
             return -1
         for i in range(self.m.GetNumChildren()):
-            key = self.m.GetChildAtIndex(i).GetChildMemberWithName("first").GetValue()
+            key = _common.key_text(self.m.GetChildAtIndex(i).GetChildMemberWithName("first"))
             if name == "[%s]" % key:
                 return i
         return -1
@@ -63,7 +65,7 @@ class QMapSyntheticProvider:
         if self.m is None or index < 0 or index >= self.m.GetNumChildren():
             return None
         pair = self.m.GetChildAtIndex(index)
-        key = pair.GetChildMemberWithName("first").GetValue()
+        key = _common.key_text(pair.GetChildMemberWithName("first"))
         return pair.GetChildMemberWithName("second").Clone("[%s]" % key)
 
 

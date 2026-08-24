@@ -70,6 +70,14 @@ int main()
     hash.insert(3, "three");
     QHash<int, QString> hashEmpty;
 
+    QMap<QString, int> mapStringKey;
+    mapStringKey.insert("apple", 1);
+    mapStringKey.insert("banana", 2);
+
+    QHash<QString, int> hashStringKey;
+    hashStringKey.insert("apple", 1);
+    hashStringKey.insert("banana", 2);
+
     stopHere();
     return 0;
 }

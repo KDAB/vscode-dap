@@ -48,9 +48,12 @@ grep -q "stop reason = breakpoint" lldb-output.txt || {
 }
 
 # --batch echoes each command back as "(lldb) <command>"; strip those and the
-# markers, leaving just the "frame variable" output.
+# markers, leaving just the "frame variable" output. Also strip lldb's own DWARF-verifier
+# warnings ("error: main 0x...: DW_TAG_member ... extends beyond the bounds of 0x..."): gcc's
+# debug info for some QHashPrivate::Span<Node>::Entry instantiations trips lldb's checker even
+# though the layout is read correctly, so these are noise, not a printer failure.
 sed -n '/^>>>$/,/^<<<$/p' lldb-output.txt \
-    | grep -v -e '^>>>$' -e '^<<<$' -e '^(lldb) ' > output.txt || :
+    | grep -v -e '^>>>$' -e '^<<<$' -e '^(lldb) ' -e '^error: main .*: DW_TAG_member ' > output.txt || :
 
 echo "Comparing output..."
 if diff -u expected.txt output.txt; then
