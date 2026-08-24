@@ -14,15 +14,27 @@ import { SessionOptions } from "../../sessionOptions";
  * Note what is *not* here: unlike gdb, lldb-dap merges "env" into the
  * environment the inferior inherits rather than replacing it, so it needs no
  * equivalent of gdb's inf.clear_env() workaround.
+ *
+ * `qtPrettyPrintersCommand` is passed in rather than derived here because
+ * building it needs a `vscode.ExtensionContext` to locate the bundled
+ * printers, which this module deliberately has no dependency on.
  */
 export function applyLldbConfiguration(
   config: Record<string, unknown>,
   options: SessionOptions,
+  qtPrettyPrintersCommand?: string,
 ): void {
   // lldb-dap's "sourceMap" takes [from, to] pairs, and populates
   // target.source-map from them.
   const sourceMap = Object.entries(options.sourceFileMap);
   if (sourceMap.length !== 0) {
     config["sourceMap"] = sourceMap;
+  }
+
+  if (qtPrettyPrintersCommand) {
+    const initCommands = Array.isArray(config["initCommands"])
+      ? (config["initCommands"] as unknown[])
+      : [];
+    config["initCommands"] = [...initCommands, qtPrettyPrintersCommand];
   }
 }

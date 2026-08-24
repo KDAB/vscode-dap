@@ -59,8 +59,10 @@ These mean the same thing under both debuggers, in both `launch` and `attach` co
   `initCommands` under lldb to say exactly what you mean.
 - `skipInitFiles`: Skip reading the debugger's own init files, as if by passing `-nx`.
   **gdb only** — `lldb-dap` sources `~/.lldbinit` unconditionally and offers no way to stop it.
-- `qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `false`). **gdb
-  only**. If they haven't been downloaded yet, starting a debug session offers to download them.
+- `qtPrettyPrinters`: Automatically load Qt pretty-printers (default `false`). Under gdb, this
+  downloads the KDevelop Qt gdb pretty-printer scripts on first use, offering to do so if they
+  aren't there yet. Under lldb-dap, this imports the Qt pretty-printers bundled with the
+  extension - nothing to download.
 
 Setting a gdb-only option on an `kdap-lldb` session isn't fatal: the session starts and a
 warning says what was ignored.

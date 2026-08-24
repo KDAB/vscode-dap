@@ -346,6 +346,11 @@
                   "type": "string"
                 }
               },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Load the Qt pretty-printers bundled with this extension by importing them as an lldb Python module.",
+                "default": false
+              },
               "program": {
                 "type": "string",
                 "description": "Path to the executable to debug."
@@ -505,6 +510,11 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Load the Qt pretty-printers bundled with this extension by importing them as an lldb Python module.",
+                "default": false
               },
               "pid": {
                 "type": [
