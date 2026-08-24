@@ -61,15 +61,18 @@ def format_value(valobj):
     if not qurlprivate_type.IsValid():
         return None
     priv = d.CreateValueFromAddress("QUrlPrivate", address, qurlprivate_type)
-    scheme = _common.qstring_text(priv.GetChildMemberWithName("scheme"))
-    user_name = _common.qstring_text(priv.GetChildMemberWithName("userName"))
-    host = _common.qstring_text(priv.GetChildMemberWithName("host"))
-    path = _common.qstring_text(priv.GetChildMemberWithName("path"))
-    query = _common.qstring_text(priv.GetChildMemberWithName("query"))
-    fragment = _common.qstring_text(priv.GetChildMemberWithName("fragment"))
+    # None from qstring_text() means the member couldn't be read at all, which is not the same
+    # thing as an absent component, so every one of them has to be checked before any is used:
+    # letting a None through would just make that component test as falsy below and silently
+    # drop out of the URL, turning a failed read into a plausible-looking wrong answer.
+    texts = [
+        _common.qstring_text(priv.GetChildMemberWithName(name))
+        for name in ("scheme", "userName", "host", "path", "query", "fragment")
+    ]
     port_value = priv.GetChildMemberWithName("port")
-    if scheme is None or host is None or path is None or not port_value.IsValid():
+    if any(text is None for text in texts) or not port_value.IsValid():
         return None
+    scheme, user_name, host, path, query, fragment = texts
     parts = []
     if scheme:
         parts.append(scheme + "://")
