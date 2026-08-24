@@ -14,7 +14,6 @@ const defaultSettings: KdapSettings = {
   logPath: undefined,
   logLevel: undefined,
   environment: undefined,
-  qtPrettyPrinters: false,
 };
 
 function parse(
@@ -89,13 +88,30 @@ suite("parseSessionOptions", () => {
     assert.deepStrictEqual(parse({ sourceFileMap: null }).sourceFileMap, {});
   });
 
-  test("logging and pretty printers come from the settings, not the configuration", () => {
+  test("logging comes from the settings, not the configuration", () => {
     const options = parse(
-      { logPath: "/ignored", qtPrettyPrinters: true },
-      { logPath: "/tmp/dap.log", logLevel: 2, qtPrettyPrinters: false },
+      { logPath: "/ignored" },
+      { logPath: "/tmp/dap.log", logLevel: 2 },
     );
     assert.strictEqual(options.logPath, "/tmp/dap.log");
     assert.strictEqual(options.logLevel, 2);
-    assert.strictEqual(options.qtPrettyPrinters, false);
+  });
+
+  test("qtPrettyPrinters is only honoured when it really is true", () => {
+    assert.strictEqual(
+      parse({ qtPrettyPrinters: true }).qtPrettyPrinters,
+      true,
+    );
+    assert.strictEqual(
+      parse({ qtPrettyPrinters: false }).qtPrettyPrinters,
+      false,
+    );
+    assert.strictEqual(parse({}).qtPrettyPrinters, false);
+    // launch.json is JSON, so a string here is a user mistake rather than
+    // something to coerce.
+    assert.strictEqual(
+      parse({ qtPrettyPrinters: "true" }).qtPrettyPrinters,
+      false,
+    );
   });
 });

@@ -15,7 +15,10 @@ import { readSettings } from "./settings";
 export class DapConfigurationProvider
   implements vscode.DebugConfigurationProvider
 {
-  constructor(private readonly backend: DebuggerBackend) {}
+  constructor(
+    private readonly backend: DebuggerBackend,
+    private readonly extensionContext: vscode.ExtensionContext,
+  ) {}
 
   /**
    * Runs after VS Code has substituted `${workspaceFolder}` and friends, so
@@ -29,6 +32,7 @@ export class DapConfigurationProvider
     return this.backend.resolveConfiguration(
       debugConfiguration,
       parseSessionOptions(debugConfiguration, settings),
+      { extensionContext: this.extensionContext },
     );
   }
 }

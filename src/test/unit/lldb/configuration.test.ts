@@ -19,8 +19,13 @@ const noOptions: SessionOptions = {
 function apply(
   config: Record<string, unknown>,
   options: Partial<SessionOptions> = {},
+  qtPrettyPrintersCommand?: string,
 ) {
-  applyLldbConfiguration(config, { ...noOptions, ...options });
+  applyLldbConfiguration(
+    config,
+    { ...noOptions, ...options },
+    qtPrettyPrintersCommand,
+  );
   return config;
 }
 
@@ -59,5 +64,37 @@ suite("applyLldbConfiguration", () => {
     // lldb-dap merges "env" into the inherited environment rather than
     // replacing it, so it needs no equivalent of gdb's clear_env workaround.
     assert.deepStrictEqual(apply({ env: { A: "1" } }), { env: { A: "1" } });
+  });
+
+  test("an undefined qtPrettyPrintersCommand adds no initCommands", () => {
+    assert.deepStrictEqual(apply({ program: "/bin/ls" }), {
+      program: "/bin/ls",
+    });
+  });
+
+  test("a qtPrettyPrintersCommand is added to initCommands", () => {
+    assert.deepStrictEqual(
+      apply({ program: "/bin/ls" }, {}, "command script import /qt"),
+      {
+        program: "/bin/ls",
+        initCommands: ["command script import /qt"],
+      },
+    );
+  });
+
+  test("a qtPrettyPrintersCommand is appended after the caller's own initCommands", () => {
+    assert.deepStrictEqual(
+      apply(
+        { initCommands: ["platform select remote-linux"] },
+        {},
+        "command script import /qt",
+      ),
+      {
+        initCommands: [
+          "platform select remote-linux",
+          "command script import /qt",
+        ],
+      },
+    );
   });
 });

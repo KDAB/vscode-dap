@@ -101,12 +101,6 @@
           "additionalProperties": {
             "type": "string"
           }
-        },
-        "kdap.gdb.qtPrettyPrinters": {
-          "scope": "resource",
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically load Qt pretty-printers for gdb. If they haven't been downloaded yet, starting a debug session offers to download them."
         }
       }
     },
@@ -197,6 +191,11 @@
                   "type": "string"
                 }
               },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Automatically load Qt pretty-printers for gdb. If they haven't been downloaded yet, starting a debug session offers to download them.",
+                "default": false
+              },
               "program": {
                 "type": "string",
                 "description": "Path to the executable to debug. Corresponds to gdb's 'file' command."
@@ -247,6 +246,11 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Automatically load Qt pretty-printers for gdb. If they haven't been downloaded yet, starting a debug session offers to download them.",
+                "default": false
               },
               "pid": {
                 "type": [
@@ -341,6 +345,11 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Load the Qt pretty-printers bundled with this extension by importing them as an lldb Python module.",
+                "default": false
               },
               "program": {
                 "type": "string",
@@ -501,6 +510,11 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              },
+              "qtPrettyPrinters": {
+                "type": "boolean",
+                "description": "Load the Qt pretty-printers bundled with this extension by importing them as an lldb Python module.",
+                "default": false
               },
               "pid": {
                 "type": [

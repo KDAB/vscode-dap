@@ -22,7 +22,6 @@ export interface KdapSettings {
   readonly logLevel: number | undefined;
   /** Extra environment variables for the debugger process itself. */
   readonly environment: Readonly<Record<string, string>> | undefined;
-  readonly qtPrettyPrinters: boolean;
 }
 
 /** Treats an unset, empty or non-string value as absent. */
@@ -52,6 +51,5 @@ export function readSettings(
     logPath: logPath && expandConfigPath(logPath, folderPath),
     logLevel: own.get<number>("logLevel"),
     environment: shared.get<Record<string, string>>("environment"),
-    qtPrettyPrinters: own.get<boolean>("qtPrettyPrinters") ?? false,
   };
 }

@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
       vscode.debug.registerDebugConfigurationProvider(
         backend.debugType,
-        new DapConfigurationProvider(backend),
+        new DapConfigurationProvider(backend, context),
       ),
     );
   }

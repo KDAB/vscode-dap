@@ -13,7 +13,8 @@
         "request": "launch",
         "program": "${command:cmake.launchTargetPath}",
         "args": [],
-        "cwd": "${command:cmake.buildDirectory}"
+        "cwd": "${command:cmake.buildDirectory}",
+        "qtPrettyPrinters": true
       },
       {
         "name": "Launch Current Target (LLDB)",
@@ -21,7 +22,8 @@
         "request": "launch",
         "program": "${command:cmake.launchTargetPath}",
         "args": [],
-        "cwd": "${command:cmake.buildDirectory}"
+        "cwd": "${command:cmake.buildDirectory}",
+        "qtPrettyPrinters": true
       },
       {
         "name": "Launch Current Target, stop at main",

@@ -88,6 +88,7 @@ export interface DebuggerBackend {
   resolveConfiguration(
     config: vscode.DebugConfiguration,
     options: SessionOptions,
+    context: BackendContext,
   ): vscode.DebugConfiguration;
 }
 

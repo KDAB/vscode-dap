@@ -35,6 +35,7 @@ export interface SessionOptions {
   readonly logPath: string | undefined;
   /** Only meaningful when `logPath` is set. */
   readonly logLevel: number | undefined;
+  /** From the launch configuration; false unless explicitly enabled there. */
   readonly qtPrettyPrinters: boolean;
   /** Extra environment variables for the debugger process itself. */
   readonly environment: Readonly<Record<string, string>> | undefined;
@@ -43,6 +44,11 @@ export interface SessionOptions {
 /** Reads a string property, treating an empty or non-string value as absent. */
 function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length !== 0 ? value : undefined;
+}
+
+/** Reads a boolean property, treating a non-boolean value as absent. */
+function optionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 /**
@@ -75,7 +81,7 @@ export function parseSessionOptions(
     sourceFileMap: parseSourceFileMap(config["sourceFileMap"]),
     logPath: settings.logPath,
     logLevel: settings.logLevel,
-    qtPrettyPrinters: settings.qtPrettyPrinters,
+    qtPrettyPrinters: optionalBoolean(config["qtPrettyPrinters"]) ?? false,
     environment: settings.environment,
   };
 }

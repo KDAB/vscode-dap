@@ -1,13 +1,19 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
+import * as path from "path";
 import * as vscode from "vscode";
 
 import { findVersionedExecutableInPath } from "../../paths";
 import { SessionOptions } from "../../sessionOptions";
-import { AdapterCommand, DebuggerBackend } from "../backend";
+import { AdapterCommand, BackendContext, DebuggerBackend } from "../backend";
 import { buildLldbAdapterCommand } from "./arguments";
 import { applyLldbConfiguration } from "./configuration";
+
+/** Absolute path to the Qt pretty-printers bundled with this extension. */
+function qtPrettyPrintersDir(context: vscode.ExtensionContext): string {
+  return context.asAbsolutePath(path.join("printers", "lldb", "qt"));
+}
 
 /**
  * Drives lldb-dap, LLDB's own DAP adapter binary.
@@ -42,8 +48,14 @@ export class LldbBackend implements DebuggerBackend {
   resolveConfiguration(
     config: vscode.DebugConfiguration,
     options: SessionOptions,
+    context: BackendContext,
   ): vscode.DebugConfiguration {
-    applyLldbConfiguration(config, options);
+    // Bundled with this extension rather than downloaded, so - unlike gdb's
+    // printers - there is nothing to fetch and nothing that can be missing.
+    const qtPrettyPrintersCommand = options.qtPrettyPrinters
+      ? `command script import ${JSON.stringify(qtPrettyPrintersDir(context.extensionContext))}`
+      : undefined;
+    applyLldbConfiguration(config, options, qtPrettyPrintersCommand);
     return config;
   }
 }

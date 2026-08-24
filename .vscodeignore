@@ -27,3 +27,6 @@ eslint.config.mjs
 build_package.sh
 upload_package.sh
 tsconfig.test.json
+printers/lldb/qt/tests/
+printers/lldb/qt/__pycache__/
+printers/lldb/qt/README.md

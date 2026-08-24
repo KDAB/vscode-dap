@@ -88,20 +88,6 @@ async function disconnectAndWait(session: vscode.DebugSession): Promise<void> {
  */
 export function defineDebugSuite(target: DebuggerBackend) {
   suite(`Debugging with ${target.displayName}`, () => {
-    /**
-     * Whether this debugger has a Qt pretty printer setting at all. Only gdb
-     * does, and updating a setting VS Code doesn't know about throws, so this
-     * is asked of the configuration rather than assumed per debugger.
-     */
-    function qtPrettyPrintersSetting() {
-      const config = vscode.workspace.getConfiguration(`kdap.${target.id}`);
-      // inspect() answers for unregistered keys too, with every field
-      // undefined, so a declared default is what distinguishes them.
-      const declared =
-        config.inspect("qtPrettyPrinters")?.defaultValue !== undefined;
-      return declared ? config : undefined;
-    }
-
     suiteSetup(async function () {
       this.timeout(30000);
 
@@ -118,22 +104,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         remappedProgramPath,
         sourcePath,
       ]);
-
-      // Otherwise starting a session on a machine without the printers pops a
-      // modal offering to download them, which nothing here would ever answer.
-      await qtPrettyPrintersSetting()?.update(
-        "qtPrettyPrinters",
-        false,
-        vscode.ConfigurationTarget.Global,
-      );
-    });
-
-    suiteTeardown(async () => {
-      await qtPrettyPrintersSetting()?.update(
-        "qtPrettyPrinters",
-        undefined,
-        vscode.ConfigurationTarget.Global,
-      );
     });
 
     let testIndex = 0;
