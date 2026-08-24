@@ -37,6 +37,14 @@
 # "QUrl(...)" wrapper, matching QDate/QTime's own bare convention) and, for an invalid one,
 # "<invalid>" - both confirmed against tests/run_gdb_printers.sh's output, and both kept here:
 # unlike QDate's invalid case, the reference's QUrl handling isn't broken.
+#
+# "<empty>" is this printer's own, though: re-assembly yielding nothing has to be told apart from
+# format_value() returning None, since an empty summary makes LLDB drop the summary and expand
+# the struct instead, showing the raw "d" pointer this printer exists to replace. QUrl("") lands
+# here (it allocates a "d", so it isn't the "<invalid>" case, even though QUrl::isValid() is
+# false for it) and so does the one valid URL that can re-assemble to nothing: a QUrl carrying
+# only a password, which is deliberately not read. Hence "<empty>" rather than reusing
+# "<invalid>", which would be an outright false claim about the latter.
 
 from . import _common
 
@@ -76,7 +84,8 @@ def format_value(valobj):
         parts.append("?" + query)
     if fragment:
         parts.append("#" + fragment)
-    return "".join(parts)
+    # See the module comment for why an empty re-assembly can't just be returned as "".
+    return "".join(parts) or "<empty>"
 
 
 def qurl_summary(valobj, internal_dict):

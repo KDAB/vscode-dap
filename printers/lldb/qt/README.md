@@ -278,6 +278,14 @@ for an invalid one, `<invalid>` - both confirmed against `tests/run_gdb_printers
 and both kept here since, unlike `QDate`'s invalid case, the reference's `QUrl` handling isn't
 broken.
 
+`<empty>` is this printer's own addition, for a reassembly that comes out empty. It can't just
+return `""` there: an empty summary makes LLDB drop the summary and expand the struct instead,
+showing the raw `d` pointer the printer exists to replace. `QUrl("")` lands here - it allocates a
+`d`, so it isn't the `<invalid>` case, even though `QUrl::isValid()` is false for it - and so
+does the one *valid* URL that can reassemble to nothing: a `QUrl` carrying only a password, which
+is deliberately not read. That second case is why this isn't just reusing `<invalid>`, which
+would be an outright false claim about it.
+
 Two more things bite here, both toolchain-dependent rather than bugs:
 
 - Plain `SBValue.Dereference()` on `d` doesn't work: it resolves against the pointee type as the

@@ -73,6 +73,8 @@
 (QUrl) url = https://user@example.com:8080/path/to/thing?query=1&x=2#frag
 (QUrl) urlSimple = https://example.com/
 (QUrl) urlInvalid = <invalid>
+(QUrl) urlEmpty = <empty>
+(QUrl) urlPasswordOnly = <empty>
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

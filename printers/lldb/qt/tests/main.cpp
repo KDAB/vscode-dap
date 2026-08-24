@@ -124,6 +124,10 @@ int main()
     QUrl url("https://user:pass@example.com:8080/path/to/thing?query=1&x=2#frag");
     QUrl urlSimple("https://example.com/");
     QUrl urlInvalid;
+    QUrl urlEmpty("");
+    // Valid, but everything it holds is the password the printer deliberately never reads.
+    QUrl urlPasswordOnly;
+    urlPasswordOnly.setPassword("secret");
 
     QMap<int, QString> map;
     map.insert(1, "one");
