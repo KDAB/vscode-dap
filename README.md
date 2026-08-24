@@ -59,6 +59,8 @@ These mean the same thing under both debuggers, in both `launch` and `attach` co
   `initCommands` under lldb to say exactly what you mean.
 - `skipInitFiles`: Skip reading the debugger's own init files, as if by passing `-nx`.
   **gdb only** — `lldb-dap` sources `~/.lldbinit` unconditionally and offers no way to stop it.
+- `qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `false`). **gdb
+  only**. If they haven't been downloaded yet, starting a debug session offers to download them.
 
 Setting a gdb-only option on an `kdap-lldb` session isn't fatal: the session starts and a
 warning says what was ignored.
@@ -102,16 +104,13 @@ warning says what was ignored.
 - `kdap.gdb.logLevel`: gdb's DAP logging verbosity (default `1`). gdb only; lldb-dap has no
   equivalent.
 - `kdap.environment`: Extra environment variables set on the debugger process itself.
-- `kdap.gdb.qtPrettyPrinters`: Automatically load Qt pretty-printers for gdb (default `true`). If
-  they haven't been downloaded yet, starting a debug session offers to download them; declining
-  starts the session without them. gdb only — the scripts are gdb Python.
 
 ## Commands
 
 - **KDAB DAP: Download Qt Pretty Printers** — downloads the
   [KDevelop Qt gdb pretty-printer scripts](https://github.com/iamsergio/kdevelop/tree/vscode-gdb-dap/plugins/gdb/printers)
   into the extension's global storage. Run this once via the Command Palette to enable Qt
-  pretty-printing (see `kdap.gdb.qtPrettyPrinters` above).
+  pretty-printing (see `qtPrettyPrinters` above).
 - **KDAB DAP: Debug with Args** — starts one of your launch configurations, prompting for the
   arguments to pass to the inferior instead of using the configuration's `args`. The input is
   split like a shell splits a command line, so quote arguments containing spaces.

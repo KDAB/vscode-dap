@@ -137,7 +137,7 @@ export async function getQtPrettyPrintersArgs(
       {
         modal: true,
         detail:
-          "Declining starts the session without Qt pretty printing. Set kdap.qtPrettyPrinters to false to stop being asked.",
+          "Declining starts the session without Qt pretty printing. Set qtPrettyPrinters to false in the launch configuration to stop being asked.",
       },
       downloadAction,
     );
