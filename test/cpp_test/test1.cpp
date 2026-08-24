@@ -27,6 +27,7 @@ int main() {
   QHash<QString, int> qh = {{"one", 1}, {"two", 2}, {"three", 3}};
   QRect rect(10, 20, 100, 200);
   QSize size(640, 480);
+  QString qstr= "qstr";
 
   int result = add(2, 3);
   printf("result = %d\n", result);
