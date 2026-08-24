@@ -18,6 +18,7 @@ from . import qrectf
 from . import qsize
 from . import qsizef
 from . import qstring
+from . import qstringview
 from . import qvector
 
 CATEGORY = "kdab-qt"
@@ -34,6 +35,7 @@ _MODULES = (
     qvector,
     qstring,
     qlatin1string,
+    qstringview,
     qmap,
     qhash,
 )

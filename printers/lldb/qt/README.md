@@ -23,6 +23,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QVector`
 - `QString`
 - `QLatin1String`
+- `QStringView`
 - `QMap`
 - `QHash`
 
@@ -31,7 +32,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Strings/views: `QStringView`, `QUtf8StringView`, `QByteArray`
+- Strings/views: `QUtf8StringView`, `QByteArray`
 - Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
   declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
   `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
@@ -153,6 +154,14 @@ that a `QString` prints verbatim comes out backslash-u-escaped from the equivale
 escapes every byte at or above the DEL character the same way `QLatin1String` does, which doesn't
 actually match real `QString`/`QDebug` output for non-ASCII text — a pre-existing divergence, out
 of scope here since it isn't exercised by `tests/main.cpp`'s ASCII-only `QString` fixtures.)
+
+**`QStringView` (`qstringview.py`) is the escaping rule the `QLatin1String` paragraph above
+contrasts against** — a non-owning view over the same UTF-16 data `QString` itself stores
+(`m_data`, a `char16_t *`, and `m_size`, in UTF-16 code units), read and decoded the same way
+`qstring.py`'s `format_value()` reads `QString`'s own `d.ptr`/`d.size`. Its escaping only covers
+C0 control characters and DEL; everything else, including astral characters (surrogate pairs
+decode to a single Python character via `str.decode("utf-16-le")`, same as `qstring.py`), prints
+as literal text.
 
 ## Testing
 

@@ -11,6 +11,7 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QStringView>
 #include <QVector>
 
 // The runners break here and inspect the frame above, so main() can grow new
@@ -62,6 +63,10 @@ int main()
     QLatin1String l1str("hello");
     QLatin1String l1strEmpty("");
     QLatin1String l1strEscaped("he said \"hi\"\nnext");
+
+    QStringView sv(str);
+    QStringView svEmpty(strEmpty);
+    QStringView svEscaped(strEscaped);
 
     QMap<int, QString> map;
     map.insert(1, "one");
