@@ -14,6 +14,7 @@ from . import qlinef
 from . import qmap
 from . import qpoint
 from . import qpointf
+from . import qqueue
 from . import qrect
 from . import qrectf
 from . import qsize
@@ -36,6 +37,7 @@ _MODULES = (
     qline,
     qlinef,
     qvector,
+    qqueue,
     qstring,
     qlatin1string,
     qstringlist,

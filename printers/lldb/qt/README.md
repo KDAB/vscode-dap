@@ -20,7 +20,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QSize`, `QSizeF`
 - `QRect`, `QRectF`
 - `QLine`, `QLineF`
-- `QVector`, `QList`, `QStringList`
+- `QVector`, `QList`, `QStringList`, `QQueue`
 - `QString`
 - `QLatin1String`
 - `QStringView`
@@ -34,7 +34,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QQueue`, `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
+- Containers: `QStack`, `QMultiMap`, `QMultiHash`, `QSet`
   (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
   print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
@@ -139,6 +139,14 @@ text and registers both under `^QStringList$`. The reference gdb printer, as men
 prints a `QStringList` as a generic `QList<QString>` rather than keeping its own name; this
 prints `QStringList (size = N)` instead, on the view that a Qt developer looking at their own
 `QStringList` variable in the debugger would rather see the type they actually wrote.
+
+**`QQueue<T>` (`qqueue.py`) is the same situation as `QStringList`, just still generic**: a real
+subclass (`class QQueue : public QList<T>`) adding `enqueue()`/`dequeue()` but no data members of
+its own, reusing `qvector.py`'s member access and synthetic provider unmodified. Unlike
+`QStringList`, its own declared name (`QQueue<int>`) already carries the template argument the
+same way `QList`'s does, so `qqueue_summary()` doesn't need a hardcoded fallback string - and,
+unlike the `QStringList` case, the reference gdb printer keeps `QQueue`'s own name too
+(`QQueue<int> (size = 2)`, not `QList<int>`), so there's no naming disagreement to resolve here.
 
 **`QMap` and `QHash` are associative containers**, so their synthetic children are named
 `[key]` (via `SBValue.Clone("[key]")` on the value) rather than `[index]`, and, unlike `QVector`,

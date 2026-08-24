@@ -10,6 +10,7 @@
 #include <QList>
 #include <QMap>
 #include <QPoint>
+#include <QQueue>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -65,6 +66,11 @@ int main()
 
     QStringList sl = {"one", "two"};
     QStringList slEmpty;
+
+    QQueue<int> queue;
+    queue.enqueue(1);
+    queue.enqueue(2);
+    QQueue<int> queueEmpty;
 
     QString str("hello");
     QString strEmpty("");

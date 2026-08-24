@@ -34,6 +34,11 @@
   [1] = "two"
 }
 (QStringList) slEmpty = QStringList (size = 0) {}
+(QQueue<int>) queue = QQueue<int> (size = 2) {
+  [0] = 1
+  [1] = 2
+}
+(QQueue<int>) queueEmpty = QQueue<int> (size = 0) {}
 (QString) str = "hello"
 (QString) strEmpty = ""
 (QString) strEscaped = "he said \"hi\"\nnext"
