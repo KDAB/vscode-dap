@@ -23,6 +23,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QVector`
 - `QString`
 - `QMap`
+- `QHash`
 
 ## Adding a type
 
@@ -93,6 +94,28 @@ and compilers disagree on what type name they leave in the debug info for such a
 reports the bare typedef name (`QVector`, no template argument), clang reports the canonical name
 (`QVector<int>`). `qvector.py`'s regex (`^QVector(<.*>)?$`) matches both; check this if a future
 alias-template type (there may be others) behaves unexpectedly on one toolchain but not the other.
+
+**`QMap` and `QHash` are associative containers**, so their synthetic children are named
+`[key]` (via `SBValue.Clone("[key]")` on the value) rather than `[index]`, and, unlike `QVector`,
+both are genuine class templates — their debug-info type name always carries the template
+arguments (`QMap<int, QString>`, never a bare `QMap`), so their regexes (`^QMap<.*>$`,
+`^QHash<.*>$`) require them, and the summary can read the element types straight off
+`valobj.GetNonSyntheticValue().GetType().GetName()` instead of digging into a member pointer's
+pointee type the way `qvector.py` does.
+
+- `qmap.py` doesn't walk `QMap`'s underlying `std::map` red-black tree itself: `QMap<Key, T>` is
+  implemented as a `std::map<Key, T>` (see qtbase's `qmap.h`) reached through
+  `d.d.<the-shared-pointer's-only-member>`, and LLDB already ships a synthetic children provider
+  for `std::map` — `_std_map()`'s `GetNumChildren()`/`GetChildAtIndex()` calls on that member
+  transparently use it, giving sorted-by-key iteration for free.
+- `qhash.py` has no equivalent to lean on: `QHash<Key, T>`'s `d` is a
+  `QHashPrivate::Data<Node>*`, split into `Span`s of 128 buckets each (`SpanConstants` in
+  qtbase's `qhash.h`), and there's no built-in LLDB formatter for that layout. `_nodes()` walks
+  `d->spans[bucket / 128].offsets[bucket % 128]` for `bucket` in `0..d->numBuckets` itself,
+  skipping buckets whose offset is `0xff` (unused), which reproduces `QHash`'s own iteration
+  order. That order depends on the hash seed rather than insertion order, so
+  `tests/main.cpp` calls `QHashSeed::setDeterministicGlobalSeed()` before populating its
+  `QHash` fixture — without it, `expected.txt`'s `[key]` order would vary from run to run.
 
 ## Testing
 

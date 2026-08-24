@@ -32,3 +32,9 @@
   [3] = "three"
 }
 (QMap<int, QString>) mapEmpty = QMap<int, QString> (size = 0) {}
+(QHash<int, QString>) hash = QHash<int, QString> (size = 3) {
+  [3] = "three"
+  [1] = "one"
+  [2] = "two"
+}
+(QHash<int, QString>) hashEmpty = QHash<int, QString> (size = 0) {}
