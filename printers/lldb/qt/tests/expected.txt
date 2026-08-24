@@ -83,6 +83,12 @@
   [2] = "c"
 }
 (QMultiHash<int, QString>) multiHashEmpty = QMultiHash<int, QString> (size = 0) {}
+(QSet<int>) set = QSet<int> (size = 3) {
+  [0] = 3
+  [1] = 1
+  [2] = 2
+}
+(QSet<int>) setEmpty = QSet<int> (size = 0) {}
 (QMap<QString, int>) mapStringKey = QMap<QString, int> (size = 2) {
   ["apple"] = 1
   ["banana"] = 2

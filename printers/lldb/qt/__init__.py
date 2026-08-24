@@ -19,6 +19,7 @@ from . import qpointf
 from . import qqueue
 from . import qrect
 from . import qrectf
+from . import qset
 from . import qsize
 from . import qsizef
 from . import qstack
@@ -52,6 +53,7 @@ _MODULES = (
     qmultimap,
     qhash,
     qmultihash,
+    qset,
 )
 
 

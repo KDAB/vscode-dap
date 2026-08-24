@@ -14,6 +14,7 @@
 #include <QPoint>
 #include <QQueue>
 #include <QRect>
+#include <QSet>
 #include <QSize>
 #include <QStack>
 #include <QString>
@@ -123,6 +124,12 @@ int main()
     multiHash.insert(1, "b");
     multiHash.insert(2, "c");
     QMultiHash<int, QString> multiHashEmpty;
+
+    QSet<int> set;
+    set.insert(1);
+    set.insert(2);
+    set.insert(3);
+    QSet<int> setEmpty;
 
     QMap<QString, int> mapStringKey;
     mapStringKey.insert("apple", 1);

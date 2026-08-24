@@ -28,17 +28,18 @@ enables that category. To load automatically, add the `command script import` li
 - `QByteArray`
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
+- `QSet`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Containers: `QSet`
-  (`QLinkedList` was deprecated in 5.15 and removed outright in Qt6, so there's nothing left to
-  print)
 - Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
   `QPersistentModelIndex`
+
+(`QLinkedList`, also in the reference dumper's list, was deprecated in 5.15 and removed outright
+in Qt6, so there's nothing left to print for it.)
 - CBOR: `QCborArray`, `QCborMap`, `QCborValue`, `QCborValueRef`/`QCborValueConstRef`,
   `QCborSimpleType`
 - JSON: `QJsonArray`, `QJsonObject`, `QJsonDocument`, `QJsonValue`,
@@ -194,6 +195,14 @@ list's new head - so `qmultihash.py`'s own `_entries()` walks each node's chain 
 `_nodes()`'s bucket walk, flattening bucket-order-then-chain-order into one list of `(key, value)`
 pairs. Chain order comes out most-recently-inserted-first as a consequence, matching
 `QMultiHash`'s own documented iteration order (and `QDebug`'s).
+
+**`QSet<T>` (`qset.py`) is literally `typedef QHash<T, QHashDummyValue> Hash; Hash q_hash;`**
+(`qset.h`) - a `QHash<T, QHashDummyValue>` wrapped in a member named `q_hash`, with no data
+members of its own. Its `Node<T, QHashDummyValue>` specialisation (`qhash.h`) has only a `key`,
+no `value` at all (`QHashDummyValue` is an empty type carrying no information), so
+`qset.py`'s own `_nodes()` just calls `qhash.py`'s `_nodes()` on the inner `q_hash` member and
+returns whatever it finds unmodified - the only new code is displaying each node's key by index
+(`[0]`, `[1]`, ...) instead of by `[key]`, since a set has no separate key/value split to show.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running
