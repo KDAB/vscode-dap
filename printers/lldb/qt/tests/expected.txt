@@ -59,6 +59,9 @@
 (QByteArray) ba = "hello"
 (QByteArray) baEmpty = ""
 (QByteArray) baEscaped = "he said \"hi\"\nnext"
+(QChar) qc = 'A'
+(QChar) qcControl = '\x7'
+(QChar) qcNonAscii = '\u00e9'
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"

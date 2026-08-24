@@ -29,13 +29,14 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
 - `QSet`
+- `QChar`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
+- Value types: `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
   `QPersistentModelIndex`
 
 (`QLinkedList`, also in the reference dumper's list, was deprecated in 5.15 and removed outright
@@ -203,6 +204,17 @@ no `value` at all (`QHashDummyValue` is an empty type carrying no information), 
 `qset.py`'s own `_nodes()` just calls `qhash.py`'s `_nodes()` on the inner `q_hash` member and
 returns whatever it finds unmodified - the only new code is displaying each node's key by index
 (`[0]`, `[1]`, ...) instead of by `[key]`, since a set has no separate key/value split to show.
+
+**`QChar` (`qchar.py`) has no gdb reference printer either**, so its format was pinned down the
+same way `QLatin1String`/`QStringView`'s were: compiling and running `qDebug() << value` against
+a real Qt build (see "Adding a type" above). Its only member is `ucs` (a `char16_t`, one UTF-16
+code unit), and its `QDebug` operator wraps it in single quotes without escaping the quote or
+backslash characters themselves - there's no parsing ambiguity to worry about with only one
+character between two fixed delimiters - not even DEL, which prints as a literal raw byte.
+Only C0 control characters get a hex escape (lowercase, using as few hex digits as the value
+needs - unlike `QByteArray`'s fixed 2-digit form) and non-ASCII code points get a differently
+shaped one (lowercase, 4 digits, unlike `QLatin1String`'s uppercase 4-digit one) - see
+`qchar.py`'s own comment for the exact two escape forms and their boundaries.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

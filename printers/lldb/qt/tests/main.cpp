@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <QByteArray>
+#include <QChar>
 #include <QHash>
 #include <QHashSeed>
 #include <QLatin1String>
@@ -100,6 +101,10 @@ int main()
     QByteArray ba("hello");
     QByteArray baEmpty("");
     QByteArray baEscaped("he said \"hi\"\nnext");
+
+    QChar qc('A');
+    QChar qcControl(0x07);
+    QChar qcNonAscii(0x00e9);
 
     QMap<int, QString> map;
     map.insert(1, "one");
