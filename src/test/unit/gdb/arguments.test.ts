@@ -3,7 +3,10 @@
 
 import * as assert from "assert";
 
-import { buildGdbArgs } from "../../../debuggers/gdb/arguments";
+import {
+  buildGdbArgs,
+  buildMapHintArgs,
+} from "../../../debuggers/gdb/arguments";
 import { SessionOptions } from "../../../sessionOptions";
 
 const noOptions: SessionOptions = {
@@ -18,9 +21,9 @@ const noOptions: SessionOptions = {
 
 function build(
   options: Partial<SessionOptions> = {},
-  prettyPrinterArgs: string[] = [],
+  pythonArgs: string[] = [],
 ) {
-  return buildGdbArgs({ ...noOptions, ...options }, prettyPrinterArgs);
+  return buildGdbArgs({ ...noOptions, ...options }, pythonArgs);
 }
 
 suite("buildGdbArgs", () => {
@@ -90,7 +93,7 @@ suite("buildGdbArgs", () => {
     assert.deepStrictEqual(build({ logLevel: 2 }), ["-q", "-i", "dap"]);
   });
 
-  test("pretty printer arguments come last", () => {
+  test("python arguments come last", () => {
     assert.deepStrictEqual(
       build({ skipInitFiles: true, sysroot: "/opt/sysroot" }, [
         "-iex",
@@ -139,5 +142,23 @@ suite("buildGdbArgs", () => {
         "python pass",
       ],
     );
+  });
+});
+
+suite("buildMapHintArgs", () => {
+  test("imports the fixup from the given directory and installs it", () => {
+    assert.deepStrictEqual(buildMapHintArgs("/ext/printers/gdb"), [
+      "-iex",
+      'python import sys; sys.path.insert(0, "/ext/printers/gdb"); import kdap_map_hint; kdap_map_hint.install()',
+    ]);
+  });
+
+  test("quotes a directory containing spaces or quotes", () => {
+    // The path lands inside a Python expression, so it has to be a Python
+    // literal rather than pasted in raw.
+    assert.deepStrictEqual(buildMapHintArgs('/ext dir/with"quote'), [
+      "-iex",
+      'python import sys; sys.path.insert(0, "/ext dir/with\\"quote"); import kdap_map_hint; kdap_map_hint.install()',
+    ]);
   });
 });

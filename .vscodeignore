@@ -30,3 +30,6 @@ tsconfig.test.json
 printers/lldb/qt/tests/
 printers/lldb/qt/__pycache__/
 printers/lldb/qt/README.md
+printers/gdb/tests/
+printers/gdb/__pycache__/
+printers/gdb/README.md

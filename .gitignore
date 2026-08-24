@@ -12,3 +12,4 @@ test/cpp_test/build-dev
 test/cpp_test/compile_commands.json
 test/cpp_test/.cache
 core
+test/fixtures/maps

@@ -22,8 +22,15 @@ const programPath = path.join(fixtureDir, "hello");
 const remappedProgramPath = path.join(fixtureDir, "hello-remapped");
 const remappedSourceDir = "/kdap-nonexistent/build";
 
+/** A C++ fixture holding an associative container to inspect. */
+const mapsSourcePath = path.join(fixtureDir, "maps.cpp");
+const mapsProgramPath = path.join(fixtureDir, "maps");
+
 // Line 4 (0-based) is `int sum = a + b;` in hello.c.
 const breakpointLine = 3;
+
+// Line 17 (0-based) is the `return` in maps.cpp, where byName is populated.
+const mapsBreakpointLine = 16;
 
 /** Registrations to undo after each test, even one that failed or timed out. */
 const disposables: vscode.Disposable[] = [];
@@ -103,6 +110,13 @@ export function defineDebugSuite(target: DebuggerBackend) {
         "-o",
         remappedProgramPath,
         sourcePath,
+      ]);
+      cp.execFileSync("g++", [
+        "-g",
+        "-O0",
+        "-o",
+        mapsProgramPath,
+        mapsSourcePath,
       ]);
     });
 
@@ -273,6 +287,80 @@ export function defineDebugSuite(target: DebuggerBackend) {
         stackTrace.stackFrames[0].source?.path,
         sourcePath,
         `${target.displayName} should report the mapped source path`,
+      );
+
+      await disconnectAndWait(capturedSession);
+
+      vscode.debug.removeBreakpoints([breakpoint]);
+    });
+
+    test("an associative container expands to one variable per element", async function () {
+      this.timeout(60000);
+
+      // The bug this guards against is a two-element map arriving as four
+      // variables, one per half of each key/value pair - what a gdb DAP session
+      // does with any "map"-hinted pretty printer unless
+      // printers/gdb/kdap_map_hint.py has fixed it up. How the entries are
+      // named is the debugger's own business (lldb numbers them, gdb names them
+      // after the key), so only their number is asserted.
+      const uri = vscode.Uri.file(mapsSourcePath);
+      const breakpoint = new vscode.SourceBreakpoint(
+        new vscode.Location(uri, new vscode.Position(mapsBreakpointLine, 0)),
+      );
+      vscode.debug.addBreakpoints([breakpoint]);
+
+      const stopped = waitForDapEvent<{ reason?: string; threadId?: number }>(
+        target.debugType,
+        "stopped",
+        (body) => body.reason === "breakpoint",
+      );
+
+      const started = await vscode.debug.startDebugging(undefined, {
+        type: target.debugType,
+        request: "launch",
+        name: `${target.displayName} associative container test`,
+        program: mapsProgramPath,
+        cwd: fixtureDir,
+        stopOnEntry: false,
+      });
+      assert.ok(started, "debug session should start");
+      const capturedSession = vscode.debug.activeDebugSession;
+      assert.ok(capturedSession, "there should be an active debug session");
+
+      const { threadId } = await stopped;
+
+      const stackTrace = (await capturedSession.customRequest("stackTrace", {
+        threadId: threadId!,
+      })) as { stackFrames: { id: number }[] };
+      const scopes = (await capturedSession.customRequest("scopes", {
+        frameId: stackTrace.stackFrames[0].id,
+      })) as { scopes: { name: string; variablesReference: number }[] };
+      const locals = scopes.scopes.find((scope) =>
+        scope.name.toLowerCase().startsWith("local"),
+      );
+      assert.ok(locals, `${target.displayName} should report a locals scope`);
+
+      const localVariables = (await capturedSession.customRequest("variables", {
+        variablesReference: locals.variablesReference,
+      })) as { variables: { name: string; variablesReference: number }[] };
+      const map = localVariables.variables.find(
+        (variable) => variable.name === "byName",
+      );
+      assert.ok(map, "the locals should include byName");
+      assert.ok(
+        map.variablesReference > 0,
+        `${target.displayName} should report byName as expandable`,
+      );
+
+      const elements = (await capturedSession.customRequest("variables", {
+        variablesReference: map.variablesReference,
+      })) as { variables: { name: string }[] };
+      assert.strictEqual(
+        elements.variables.length,
+        2,
+        `${target.displayName} should report one variable per map element, got ${JSON.stringify(
+          elements.variables.map((variable) => variable.name),
+        )}`,
       );
 
       await disconnectAndWait(capturedSession);

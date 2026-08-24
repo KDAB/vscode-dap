@@ -1,0 +1,19 @@
+byName = std::map with 2 elements [named=2]
+    ["apple"] = 1
+    ["banana"] = 2
+byNumber = std::map with 2 elements [named=2]
+    [1] = "one"
+    [2] = "two"
+byNameToPoint = std::map with 2 elements [named=2]
+    ["corner"] = 
+        x = 3
+        y = 4
+    ["origin"] = 
+        x = 0
+        y = 0
+emptyMap = std::map with 0 elements [named=0]
+single = std::unordered_map with 1 element [named=1]
+    ["only"] = 42
+table = Table (size = 2) [named=2]
+    [7] = 70
+    [8] = 80

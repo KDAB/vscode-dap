@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-# CI for the standalone pretty printers under printers/. Independent of the
-# extension build: no node, just a debugger, g++, cmake and Qt.
+# CI for the standalone test suites under printers/. Independent of the
+# extension build: no node, just the debuggers, g++, cmake and Qt.
 
 name: test-printers
 
@@ -19,19 +19,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install lldb, g++, cmake and Qt
+      - name: Install lldb, gdb, g++, cmake and Qt
         run: |
           sudo apt-get update
-          sudo apt-get install -y lldb g++ cmake qt6-base-dev
+          sudo apt-get install -y lldb gdb g++ cmake qt6-base-dev
 
-      - name: Versions and lldb Python probe
-        # The printers are Python; if lldb's scripting bindings are missing
-        # this fails here with an obvious message instead of as a confusing
-        # golden-output diff further down.
+      - name: Versions and Python probes
+        # Both suites are Python; if a debugger's scripting bindings are
+        # missing this fails here with an obvious message instead of as a
+        # confusing golden-output diff further down.
         run: |
           lldb --version
+          gdb --version | head -1
           qmake6 -query QT_VERSION
           lldb --batch --no-lldbinit -o "script print('lldb python ok')"
+          gdb -q -nx -batch -ex "python print('gdb python ok')"
 
       - name: test
         run: ./test-printers.sh

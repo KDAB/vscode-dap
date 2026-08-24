@@ -21,6 +21,8 @@ int main() {
   std::vector<int> numbers = {1, 2, 3, 4, 5};
   std::string greeting = "hello from gdb-dap";
 
+  std::map<int, int> map = { {1, 1} };
+
    //QString qgreeting = QStringLiteral("hello from gdb-dap");
   QVector<int> qnumbers = {1, 2, 3, 4, 5};
   QMap<QString, int> qmap = {{"one", 1}, {"two", 2}, {"three", 3}};

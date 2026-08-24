@@ -33,6 +33,7 @@ npm run compile              # Compile TypeScript to JavaScript
 ./test.sh --gdb              # Integration tests against gdb only
 ./test.sh --lldb             # Integration tests against lldb-dap only
 ./build_package.sh           # Package the extension as a .vsix file
+./test-printers.sh           # The standalone suites under printers/; needs g++, gdb, lldb and Qt
 ```
 
 `./test.sh` wraps `npm test`, which is `npm run test:unit` (plain mocha) followed by
@@ -69,6 +70,11 @@ entry, nothing else.
   `inf.clear_env()` workaround that makes a launch config's `env` merge rather than replace).
 - `src/debuggers/lldb/` — `arguments.ts` (`LLDBDAP_LOG`, and the options lldb can't honour),
   `configuration.ts` (`sourceMap`), `backend.ts` (the wiring).
+- `printers/` — Python a backend loads into its debugger, bundled in the `.vsix`:
+  `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship) and `printers/gdb/`
+  (`kdap_map_hint.py`, which makes gdb's DAP layer pair up the children of a `map`-hinted pretty
+  printer instead of showing `[0].key` / `[0].value` rows). Each has a standalone test suite
+  under `tests/`, all of them run by `./test-printers.sh`.
 
 `arguments.ts`, `configuration.ts`, `version.ts`, `sessionOptions.ts` and `paths.ts` take no
 vscode dependency, which is where the logic lives and where the unit tests reach it; the

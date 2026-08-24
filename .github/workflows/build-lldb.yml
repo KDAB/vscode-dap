@@ -27,10 +27,12 @@ jobs:
           npm install --loglevel verbose
           npm install @vscode/vsce typescript -g
 
-      - name: Install LLDB and gcc
+      - name: Install LLDB, gcc and g++
         run: |
           sudo apt-get update
-          sudo apt-get install -y lldb gcc gdb
+          # g++ builds the C++ fixture the integration suite inspects a
+          # std::map in; gcc builds the C one.
+          sudo apt-get install -y lldb gcc g++ gdb
 
       - name: Check lldb-dap version
         run: |

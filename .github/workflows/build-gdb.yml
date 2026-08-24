@@ -30,10 +30,12 @@ jobs:
           npm install --loglevel verbose
           npm install @vscode/vsce typescript -g
 
-      - name: Install GDB and gcc
+      - name: Install GDB, gcc and g++
         run: |
           sudo apt-get update
-          sudo apt-get install -y gdb gcc
+          # g++ builds the C++ fixture the integration suite inspects a
+          # std::map in; gcc builds the C one.
+          sudo apt-get install -y gdb gcc g++
 
       - name: Check GDB version
         run: gdb --version

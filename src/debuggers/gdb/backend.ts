@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 // SPDX-License-Identifier: MIT
 
+import * as path from "path";
 import * as vscode from "vscode";
 
 import { findExecutableInPath, isDirectory } from "../../paths";
@@ -11,7 +12,7 @@ import {
   BackendError,
   DebuggerBackend,
 } from "../backend";
-import { buildGdbArgs } from "./arguments";
+import { buildGdbArgs, buildMapHintArgs } from "./arguments";
 import { getQtPrettyPrintersArgs } from "./prettyPrinters";
 import {
   getGdbVersion,
@@ -20,6 +21,11 @@ import {
 } from "./version";
 
 const [MIN_MAJOR, MIN_MINOR] = MIN_GDB_VERSION;
+
+/** Absolute path to the gdb Python support bundled with this extension. */
+function gdbScriptsDir(context: vscode.ExtensionContext): string {
+  return context.asAbsolutePath(path.join("printers", "gdb"));
+}
 
 /** Drops the `undefined` values `NodeJS.ProcessEnv` allows but DAP's "env" doesn't. */
 function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
@@ -77,7 +83,15 @@ export class GdbBackend implements DebuggerBackend {
       ? await getQtPrettyPrintersArgs(context.extensionContext)
       : [];
 
-    return { args: buildGdbArgs(options, prettyPrinterArgs) };
+    // Unconditional, and independent of the Qt printers: the fixup repairs any
+    // map-hinted printer, libstdc++'s std::map included, and does nothing at
+    // all if this gdb turns out not to need it.
+    const pythonArgs = [
+      ...buildMapHintArgs(gdbScriptsDir(context.extensionContext)),
+      ...prettyPrinterArgs,
+    ];
+
+    return { args: buildGdbArgs(options, pythonArgs) };
   }
 
   /**
