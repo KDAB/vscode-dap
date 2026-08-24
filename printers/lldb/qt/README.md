@@ -25,6 +25,26 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`
 - `QHash`
 
+## TODO: missing types
+
+Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
+`pretty_printers_dict` near the end) support that we don't yet:
+
+- Strings/views: `QLatin1String`, `QStringView`, `QUtf8StringView`, `QByteArray`
+- Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
+  declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
+  `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
+- Value types: `QChar`, `QUuid`, `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
+  `QPersistentModelIndex`
+- CBOR: `QCborArray`, `QCborMap`, `QCborValue`, `QCborValueRef`/`QCborValueConstRef`,
+  `QCborSimpleType`
+- JSON: `QJsonArray`, `QJsonObject`, `QJsonDocument`, `QJsonValue`,
+  `QJsonValueRef`/`QJsonValueConstRef`
+
+`QPointF`, `QSizeF`, `QRectF`, `QLine`, `QLineF` are already covered above despite having no gdb
+printer at all — see "Adding a type" below for how those were pinned down from Qt's own
+`QDebug operator<<` instead.
+
 ## Adding a type
 
 One type per commit. Adding `<type>` means editing exactly these four files:
