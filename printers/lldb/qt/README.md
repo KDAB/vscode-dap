@@ -29,15 +29,14 @@ enables that category. To load automatically, add the `command script import` li
 - `QMap`, `QMultiMap`
 - `QHash`, `QMultiHash`
 - `QSet`
-- `QChar`, `QUuid`
+- `QChar`, `QUuid`, `QDate`
 
 ## TODO: missing types
 
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Value types: `QDate`, `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`,
-  `QPersistentModelIndex`
+- Value types: `QTime`, `QDateTime`, `QTimeZone`, `QUrl`, `QVariant`, `QPersistentModelIndex`
 
 (`QLinkedList`, also in the reference dumper's list, was deprecated in 5.15 and removed outright
 in Qt6, so there's nothing left to print for it.)
@@ -221,6 +220,25 @@ shaped one (lowercase, 4 digits, unlike `QLatin1String`'s uppercase 4-digit one)
 verbatim). The reference gdb printer's format is `QUuid({xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx})`
 (lowercase hex) - note the braces are part of its own `to_string()`, not something LLDB's
 `(QUuid)` prefix already supplies, so `quuid_summary()` includes them itself.
+
+**`QDate` (`qdate.py`) stores a single Julian day number in `jd`** (`qint64`) - the same kind of
+day count `std::chrono`'s calendar types use, give or take the epoch, so this reuses Howard
+Hinnant's well-known `civil_from_days()` algorithm (public domain, unrelated to any GPL Qt
+tooling) rather than re-deriving Gregorian calendar math from scratch. Qt's epoch for `jd` is day
+2440588 for 1970-01-01, which is `civil_from_days()`'s own day zero, so converting is just
+subtracting that constant first - confirmed by checking `jd` for a handful of known dates
+(1970-01-01, 0001-01-01, and the fixture's own 2024-03-15) directly under LLDB before trusting
+the conversion. An invalid `QDate` stores the minimum `qint64` in `jd` rather than using a
+separate validity flag.
+
+The reference gdb printer's own format for a *valid* date is the bare ISO string with no
+`QDate(...)` wrapper at all (e.g. `2024-03-15`, matching `Qt::ISODate`) - confirmed against
+`tests/run_gdb_printers.sh`'s output, and kept here since it's an unambiguous, deliberate-looking
+convention (`QTime`'s reference format, below, uses the same bare style). Its handling of an
+*invalid* `QDate` is broken, though: it prints garbage built from the raw `jd` value instead of a
+sensible fallback, so `qdate.py` uses real Qt's own `QDebug` text (`QDate(Invalid)`) for that one
+case instead - pinned down the same way as `QLatin1String`/`QStringView`'s formats, by compiling
+and running `qDebug() << value` against a real Qt build.
 
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running

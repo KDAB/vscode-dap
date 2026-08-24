@@ -8,6 +8,7 @@ Load with: command script import /path/to/printers/lldb/qt
 
 from . import qbytearray
 from . import qchar
+from . import qdate
 from . import qhash
 from . import qlatin1string
 from . import qline
@@ -53,6 +54,7 @@ _MODULES = (
     qutf8stringview,
     qbytearray,
     quuid,
+    qdate,
     qmap,
     qmultimap,
     qhash,

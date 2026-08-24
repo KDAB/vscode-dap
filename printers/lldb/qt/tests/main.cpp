@@ -3,6 +3,7 @@
 
 #include <QByteArray>
 #include <QChar>
+#include <QDate>
 #include <QHash>
 #include <QHashSeed>
 #include <QLatin1String>
@@ -109,6 +110,10 @@ int main()
 
     QUuid uuid("{550e8400-e29b-41d4-a716-446655440000}");
     QUuid uuidNull;
+
+    QDate date(2024, 3, 15);
+    QDate dateSingleDigit(2024, 1, 5);
+    QDate dateInvalid;
 
     QMap<int, QString> map;
     map.insert(1, "one");

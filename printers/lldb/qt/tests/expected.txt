@@ -64,6 +64,9 @@
 (QChar) qcNonAscii = '\u00e9'
 (QUuid) uuid = QUuid({550e8400-e29b-41d4-a716-446655440000})
 (QUuid) uuidNull = QUuid({00000000-0000-0000-0000-000000000000})
+(QDate) date = 2024-03-15
+(QDate) dateSingleDigit = 2024-01-05
+(QDate) dateInvalid = QDate(Invalid)
 (QMap<int, QString>) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"
