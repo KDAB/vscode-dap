@@ -24,6 +24,7 @@ enables that category. To load automatically, add the `command script import` li
 - `QString`
 - `QLatin1String`
 - `QStringView`
+- `QUtf8StringView`
 - `QMap`
 - `QHash`
 
@@ -32,7 +33,7 @@ enables that category. To load automatically, add the `command script import` li
 Types the reference gdb printers (`tests/run_gdb_printers.sh`'s downloaded `qt.py` — see its
 `pretty_printers_dict` near the end) support that we don't yet:
 
-- Strings/views: `QUtf8StringView`, `QByteArray`
+- Strings/views: `QByteArray`
 - Containers: `QList` itself (we only handle it via the `QVector` alias — a variable actually
   declared as `QList<T>` has no printer today), `QStringList`, `QQueue`, `QStack`,
   `QLinkedList`, `QMultiMap`, `QMultiHash`, `QSet`
@@ -162,6 +163,28 @@ contrasts against** — a non-owning view over the same UTF-16 data `QString` it
 C0 control characters and DEL; everything else, including astral characters (surrogate pairs
 decode to a single Python character via `str.decode("utf-16-le")`, same as `qstring.py`), prints
 as literal text.
+
+**`QUtf8StringView` (`qutf8stringview.py`) is a byte-oriented view, not a text one**: its two
+members are `m_data` (`const char *`, raw UTF-8 bytes, not owned) and `m_size` (`qsizetype`, in
+bytes), and its `QDebug` operator doesn't decode the UTF-8 before deciding what to escape - it
+walks the raw bytes the same way `QByteArray`'s does (`qbytearray.py` reuses `escape_bytes()`
+from here rather than duplicating it), escaping anything outside printable ASCII as a 2-digit
+hex `\xXX`. That means a multi-byte UTF-8 sequence for a non-ASCII character comes out as a run
+of `\xXX` escapes, one per byte, rather than the literal character `QStringView` would print for
+the same text.
+
+`QUtf8StringView` is also the one type here where the plain-alias assumption from `qlatin1string.py`
+(gcc and clang both report the alias name, no extra digging needed) isn't quite enough: the alias
+itself lives inside whichever of `qstringfwd.h`'s `q_has_char8_t`/`q_no_char8_t` namespaces is the
+*inline* one for the target's C++ standard (`q_has_char8_t` if compiled as C++20 or later, since
+that's what makes `char8_t` a real type; `q_no_char8_t` otherwise) - and LLDB's canonical type
+name for a variable includes that inline namespace qualifier even though it's invisible to C++
+code and to `frame variable`'s own `(TypeName)` display. `qutf8stringview.py`'s regex
+(`^(q_has_char8_t::|q_no_char8_t::)?QUtf8StringView$`) matches either qualified form, or the bare
+name, so it doesn't depend on the target's C++ standard version. Confirmed empirically the same
+way as `QLatin1String`/`QStringView`'s formats: `tests/main.cpp` builds as C++17
+(`CMakeLists.txt`'s `CMAKE_CXX_STANDARD`), which puts `QUtf8StringView`'s canonical name under
+`q_no_char8_t::` with both gcc and clang.
 
 ## Testing
 
