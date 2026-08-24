@@ -23,6 +23,16 @@ struct Table
     int values[2];
 };
 
+// Printed with the "map" display hint too, but by a printer whose num_children()
+// counts entries rather than the flat children - what libstdc++'s std::map and
+// std::unordered_map printers report between gcc de124ffe1439 and gcc
+// b80a4347fc63. A single entry, so halving that count loses the whole thing.
+struct Registry
+{
+    int key;
+    int value;
+};
+
 // The runner breaks here and inspects the frame above, so main() can grow new
 // values without any line number in test.sh needing an update.
 __attribute__((noinline)) void stopHere()
@@ -41,6 +51,7 @@ int main()
     std::unordered_map<std::string, int> single = {{"only", 42}};
 
     Table table = {{7, 8}, {70, 80}};
+    Registry registry = {9, 90};
 
     stopHere();
     return 0;

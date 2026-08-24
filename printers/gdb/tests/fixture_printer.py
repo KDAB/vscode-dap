@@ -1,13 +1,22 @@
 # SPDX-FileCopyrightText: 2026 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 # SPDX-License-Identifier: MIT
 
-"""A map-hinted pretty printer for main.cpp's Table, for the test only.
+"""Map-hinted pretty printers for main.cpp's Table and Registry, for the test only.
 
-Modelled on the KDevelop Qt printers' QHash printer: a gdb.ValuePrinter whose
-display_hint() is "map", whose children() yield a flat [i].key, [i].value
-sequence, and whose num_children() counts those flat children rather than the
-entries. Nothing but a real Qt build would otherwise cover that shape, and this
-test deliberately needs neither Qt nor a printer download.
+Both are gdb.ValuePrinters whose display_hint() is "map" and whose children()
+yield a flat [i].key, [i].value sequence; they differ in what num_children()
+counts, which is the one thing map-hinted printers in the wild disagree about:
+
+  TablePrinter counts the flat children, as the pretty-printing API defines it
+  and as the KDevelop Qt printers' QHash printer does.
+
+  RegistryPrinter counts the entries - half of what children() yields - as
+  libstdc++'s std::map and std::unordered_map printers do between gcc
+  de124ffe1439 and gcc b80a4347fc63.
+
+The fixup must render both correctly, and only a printer of its own covers the
+second shape on a machine whose libstdc++ is older or newer than that window.
+Nothing here needs Qt or a printer download.
 """
 
 import gdb
@@ -32,9 +41,32 @@ class TablePrinter(gdb.ValuePrinter):
         return "map"
 
 
+class RegistryPrinter(gdb.ValuePrinter):
+    def __init__(self, val):
+        self._val = val
+
+    def to_string(self):
+        return "Registry (size = %d)" % self.num_children()
+
+    def num_children(self):
+        # One entry, two children: the count libstdc++ reports for a
+        # single-element map, which a consumer that halves it turns into none.
+        return 1
+
+    def children(self):
+        yield ("[0].key", self._val["key"])
+        yield ("[0].value", self._val["value"])
+
+    def display_hint(self):
+        return "map"
+
+
 def _lookup(val):
-    if val.type.strip_typedefs().tag == "Table":
+    tag = val.type.strip_typedefs().tag
+    if tag == "Table":
         return TablePrinter(val)
+    if tag == "Registry":
+        return RegistryPrinter(val)
     return None
 
 

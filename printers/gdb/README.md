@@ -52,10 +52,14 @@ whether it works) and diffs the reported variables against `tests/expected.txt`.
 
 The fixture covers `std::map` with string and integer keys, values that are themselves expandable,
 an empty map, a single-element `std::unordered_map` (its iteration order is
-implementation-defined, so more than one element would make the golden output unstable), and
-`tests/fixture_printer.py`'s own map-hinted `gdb.ValuePrinter` for a `Table` struct — modelled on
-the KDevelop QHash printer, down to the `[i].key` child names and the `num_children()` that counts
-flat children, so that path is covered without Qt.
+implementation-defined, so more than one element would make the golden output unstable), and two
+map-hinted `gdb.ValuePrinter`s of its own in `tests/fixture_printer.py`, so both shapes are covered
+without Qt and whatever the local libstdc++ does: `Table`, modelled on the KDevelop QHash printer
+down to the `[i].key` child names and a `num_children()` counting flat children, and `Registry`,
+whose `num_children()` counts entries instead — what libstdc++'s `std::map` and
+`std::unordered_map` printers report between gcc `de124ffe1439` and gcc `b80a4347fc63`. The fixup
+counts by pairing rather than by halving `num_children()` precisely because the two disagree; a
+single-entry `Registry` is what a halved count would report as empty.
 
 `expected.txt` includes each variable's summary string, which for the `std::` types comes from
 libstdc++'s own printers (`std::map with 2 elements`), so a libstdc++ that words it differently

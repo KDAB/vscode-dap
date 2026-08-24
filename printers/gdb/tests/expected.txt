@@ -17,3 +17,5 @@ single = std::unordered_map with 1 element [named=1]
 table = Table (size = 2) [named=2]
     [7] = 70
     [8] = 80
+registry = Registry (size = 1) [named=1]
+    [9] = 90

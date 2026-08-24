@@ -119,24 +119,6 @@ def _paired_children(printer):
     return result
 
 
-def _flat_child_count(printer):
-    """PRINTER's own count of its flat children, or None if it doesn't say.
-
-    Only honoured for gdb.ValuePrinter subclasses, matching the rule gdb itself
-    applies in varref.py, and read as a count of children (so twice the number
-    of entries) as the pretty-printing API defines it.
-    """
-    if not isinstance(printer, gdb.ValuePrinter):
-        return None
-    num_children = getattr(printer, "num_children", None)
-    if num_children is None:
-        return None
-    try:
-        return num_children()
-    except Exception:
-        return None
-
-
 def install():
     """Patches gdb's DAP variables handling. Safe to call more than once."""
     try:
@@ -190,12 +172,21 @@ def _install():
     def child_count(self):
         # -1 is varref.py's "has children, not counted yet"; any other value is
         # either already computed or None for "no children at all".
-        printer = _printer_of(self)
-        if self.count == -1 and _is_map_printer(printer):
-            flat = _flat_child_count(printer)
-            # A printer that can't say (Qt's QMap on Qt6 with no std::map
-            # printer available returns None) leaves counting to the pairing.
-            self.count = flat // 2 if flat is not None else len(self.cache_children())
+        if self.count == -1 and _is_map_printer(_printer_of(self)):
+            # Counted by pairing, deliberately not from the printer's own
+            # num_children(): for a map-hinted printer that number can't be
+            # trusted to mean what the pretty-printing API says it does. gcc
+            # de124ffe1439 gave libstdc++'s std::map and std::unordered_map
+            # printers a num_children() returning the number of *entries* -
+            # half of what their children() yields - and only gcc b80a4347fc63
+            # made them count children; distributions ship the version in
+            # between (Ubuntu 26.04's libstdc++ among them). Halving such a
+            # count reports a one-entry map as having no children at all.
+            #
+            # Every map the client expands is materialised here anyway -
+            # fetch_one_child() reads this same cache - so the walk costs
+            # something only for a map that is counted and never expanded.
+            self.count = len(self.cache_children())
         return orig_child_count(self)
 
     def fetch_one_child(self, idx):
