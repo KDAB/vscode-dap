@@ -260,13 +260,17 @@ is defined *only* inside qtbase's `qurl.cpp` - never in any header. Every other 
 comes from a header the debuggee's own translation unit includes, so the debug info LLDB needs
 comes from the debuggee regardless of how Qt's shared library itself was built; `QUrlPrivate` has
 no such header, so LLDB can only see its members if `libQt6Core`'s *own* debug info describes
-them. Confirmed present both in a from-source Qt 6.10.2 build and in Ubuntu's packaged
-`qt6-base-dev` (checked directly - installed it, built a throwaway fixture against it, inspected
-`*url.d` under LLDB, purged it again), so this isn't the edge case it might sound like for a
-typical Linux setup. A sufficiently stripped Qt install would just make every
-`GetChildMemberWithName()` in `format_value()` fail and it return `None`, same as any other
-"unrecognised layout" case - falling back to the default struct display of the raw `d` pointer,
-not anything actively wrong.
+them. A from-source Qt build has it; a stripped Qt doesn't, and that covers most *packaged* Qt
+installs - `qt6-base-dev` on Ubuntu 26.04 carries no `QUrlPrivate` debug info (its symbols are in
+a separate `-dbgsym` package from the ddeb archive), and Qt's own binaries only carry it when the
+separately-installable `debug_info` module is present. So this **is** a case a typical Linux setup
+runs into, and it's why `.github/workflows/test-printers.yml` installs Qt through
+[aqtinstall](https://github.com/miurahr/aqtinstall) with `--modules debug_info` rather than from
+apt. With a stripped Qt, `format_value()` just returns `None`, same as any other "unrecognised
+layout" case - falling back to the default struct display of the raw `d` pointer, not anything
+actively wrong. That fallback is exactly what the `<empty>` return exists to avoid being confused
+with, and what a `QUrl` line in `tests/expected.txt` regressing to a `d = 0x...` dump means:
+missing Qt debug info, not a broken printer.
 
 The relevant `QUrlPrivate` members are `port` (`int`, `-1` when absent) and six plain `QString`
 members - `scheme`, `userName`, `host`, `path`, `query`, `fragment` - read via

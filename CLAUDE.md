@@ -34,6 +34,8 @@ npm run compile              # Compile TypeScript to JavaScript
 ./test.sh --lldb             # Integration tests against lldb-dap only
 ./build_package.sh           # Package the extension as a .vsix file
 ./test-printers.sh           # The standalone suites under printers/; needs g++, gdb, lldb and Qt
+                             # (Qt with debug info: QUrl's printer reads QUrlPrivate, which only
+                             #  libQt6Core's own debug info describes - see printers/lldb/qt/README.md)
 ```
 
 `./test.sh` wraps `npm test`, which is `npm run test:unit` (plain mocha) followed by

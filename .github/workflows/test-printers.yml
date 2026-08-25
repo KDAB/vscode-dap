@@ -16,13 +16,42 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-26.04
+    env:
+      # Pinned rather than "whatever is current": expected.txt is golden output, so the
+      # Qt behind it changes when someone changes it, not when Qt releases.
+      QT_VERSION: 6.10.2
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install lldb, gdb, g++, cmake and Qt
+      - name: Install lldb, gdb, g++ and cmake
         run: |
           sudo apt-get update
-          sudo apt-get install -y lldb gdb g++ cmake qt6-base-dev
+          sudo apt-get install -y lldb gdb g++ cmake
+
+      # Qt comes from aqtinstall (https://github.com/miurahr/aqtinstall) rather than the
+      # distro's qt6-base-dev because the lldb QUrl printer needs QtCore's own debug info.
+      # QUrlPrivate is defined only in qtbase's qurl.cpp, so - unlike every other type the
+      # printers handle - its layout isn't in any header the fixture includes, and lldb can
+      # only see it if libQt6Core itself describes it. Distro Qt is stripped (those symbols
+      # ship in separate -dbgsym packages, not in the default archives), which made the QUrl
+      # locals fall back to a raw "d" pointer dump and the suite fail on nothing but that.
+      # Qt's own "debug_info" module installs Qt6Core.debug beside the library, which lldb
+      # picks up through the library's .gnu_debuglink.
+      #
+      # --archives keeps this to the two archives the fixture needs (it applies to both the
+      # base install and debug_info); the full debug_info module is around a gigabyte.
+      - name: Install Qt with debug info
+        run: |
+          python3 -m venv "$RUNNER_TEMP/aqt-venv"
+          "$RUNNER_TEMP/aqt-venv/bin/pip" install aqtinstall
+          "$RUNNER_TEMP/aqt-venv/bin/aqt" install-qt linux desktop "$QT_VERSION" linux_gcc_64 \
+            --modules debug_info --archives qtbase icu --outputdir "$RUNNER_TEMP/Qt"
+          qt_dir="$RUNNER_TEMP/Qt/$QT_VERSION/gcc_64"
+          # CMAKE_PREFIX_PATH is what the fixture's find_package(Qt6) goes by; LD_LIBRARY_PATH
+          # is for running it, since this Qt isn't in the loader's default search path.
+          echo "QT_DIR=$qt_dir" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$qt_dir" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$qt_dir/lib" >> "$GITHUB_ENV"
 
       - name: Versions and Python probes
         # Both suites are Python; if a debugger's scripting bindings are
@@ -31,7 +60,8 @@ jobs:
         run: |
           lldb --version
           gdb --version | head -1
-          qmake6 -query QT_VERSION
+          "$QT_DIR/bin/qmake" -query QT_VERSION
+          test -f "$QT_DIR/lib/Qt6Core.debug"  # the QUrl printer is dead without this
           lldb --batch --no-lldbinit -o "script print('lldb python ok')"
           gdb -q -nx -batch -ex "python print('gdb python ok')"
 

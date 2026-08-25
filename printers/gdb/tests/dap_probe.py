@@ -39,6 +39,7 @@ WANTED = [
     "emptyMap",
     "single",
     "table",
+    "registry",
 ]
 
 

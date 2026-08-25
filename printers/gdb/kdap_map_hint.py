@@ -37,6 +37,13 @@ Nothing here is public gdb API, so every step is defensive: any surprise leaves
 gdb's own behaviour in place rather than breaking the session. Diagnostics go to
 gdb's DAP log (`set debug dap-log-file`, i.e. the extension's `kdap.logPath`) -
 never to stdout, which in DAP mode is the protocol stream.
+
+gdb 17 renamed VariableReference's "printer" and "child_cache" attributes to
+"_printer" and "_child_cache" (upstream commit dd2d4de349f, "gdb/python/dap:
+prefix internal attributes with underscore") without a deprecated alias, so a
+gdb 16 and a gdb 17+ instance don't have the same attribute under either name.
+_printer_of()/_child_cache_get()/_child_cache_set() below read whichever one
+the running gdb actually has instead of hard-coding one spelling.
 """
 
 import gdb
@@ -69,6 +76,24 @@ def _is_map_printer(printer):
         return False
 
 
+def _printer_of(instance):
+    """INSTANCE's pretty printer, under whichever attribute name this gdb uses."""
+    return instance._printer if hasattr(instance, "_printer") else instance.printer
+
+
+def _child_cache_get(instance):
+    """INSTANCE's cached paired children, under whichever attribute name this gdb uses."""
+    return instance._child_cache if hasattr(instance, "_child_cache") else instance.child_cache
+
+
+def _child_cache_set(instance, value):
+    """Sets INSTANCE's cached paired children, under whichever attribute name this gdb uses."""
+    if hasattr(instance, "_child_cache"):
+        instance._child_cache = value
+    else:
+        instance.child_cache = value
+
+
 def _child_name(key):
     """The DAP variable name for a map entry with key KEY.
 
@@ -92,24 +117,6 @@ def _paired_children(printer):
         name = _child_name(key)
         result.append((name if name is not None else "[%d]" % index, value))
     return result
-
-
-def _flat_child_count(printer):
-    """PRINTER's own count of its flat children, or None if it doesn't say.
-
-    Only honoured for gdb.ValuePrinter subclasses, matching the rule gdb itself
-    applies in varref.py, and read as a count of children (so twice the number
-    of entries) as the pretty-printing API defines it.
-    """
-    if not isinstance(printer, gdb.ValuePrinter):
-        return None
-    num_children = getattr(printer, "num_children", None)
-    if num_children is None:
-        return None
-    try:
-        return num_children()
-    except Exception:
-        return None
 
 
 def install():
@@ -157,22 +164,33 @@ def _install():
     # in an original anyway, so the assertion is not worth re-stating here.
 
     def cache_children(self):
-        if self.child_cache is None and _is_map_printer(self.printer):
-            self.child_cache = _paired_children(self.printer)
+        printer = _printer_of(self)
+        if _child_cache_get(self) is None and _is_map_printer(printer):
+            _child_cache_set(self, _paired_children(printer))
         return orig_cache_children(self)
 
     def child_count(self):
         # -1 is varref.py's "has children, not counted yet"; any other value is
         # either already computed or None for "no children at all".
-        if self.count == -1 and _is_map_printer(self.printer):
-            flat = _flat_child_count(self.printer)
-            # A printer that can't say (Qt's QMap on Qt6 with no std::map
-            # printer available returns None) leaves counting to the pairing.
-            self.count = flat // 2 if flat is not None else len(self.cache_children())
+        if self.count == -1 and _is_map_printer(_printer_of(self)):
+            # Counted by pairing, deliberately not from the printer's own
+            # num_children(): for a map-hinted printer that number can't be
+            # trusted to mean what the pretty-printing API says it does. gcc
+            # de124ffe1439 gave libstdc++'s std::map and std::unordered_map
+            # printers a num_children() returning the number of *entries* -
+            # half of what their children() yields - and only gcc b80a4347fc63
+            # made them count children; distributions ship the version in
+            # between (Ubuntu 26.04's libstdc++ among them). Halving such a
+            # count reports a one-entry map as having no children at all.
+            #
+            # Every map the client expands is materialised here anyway -
+            # fetch_one_child() reads this same cache - so the walk costs
+            # something only for a map that is counted and never expanded.
+            self.count = len(self.cache_children())
         return orig_child_count(self)
 
     def fetch_one_child(self, idx):
-        if not _is_map_printer(self.printer):
+        if not _is_map_printer(_printer_of(self)):
             return orig_fetch_one_child(self, idx)
         # Deliberately not the printer's own child(idx): for a map-hinted
         # printer that index addresses a half-entry, not an entry.
