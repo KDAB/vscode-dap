@@ -15,14 +15,39 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-26.04
+    name: test (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # One platform's printers failing says nothing about the other's, and
+      # seeing both diffs at once beats rerunning to find the second.
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux
+            runner: ubuntu-26.04
+            # Every suite.
+            suites: ""
+            qt-archives: qtbase icu
+          - name: macos
+            runner: macos-15
+            # There is no usable gdb on macOS - unsigned, so it cannot debug
+            # anything - so only the lldb printers are exercised here.
+            suites: "--lldb"
+            # No icu archive on macOS: Qt uses the system ICU there, and asking
+            # aqtinstall for it fails rather than being merely redundant.
+            qt-archives: qtbase
+
     steps:
       - uses: actions/checkout@v7
 
       - name: Install lldb, gdb, g++ and cmake
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y lldb gdb g++ cmake
+
+      # macOS needs no equivalent: lldb, clang and cmake all ship with the
+      # runner image, lldb as part of Xcode.
 
       # Not the distro's qt6-base-dev: expected.txt is golden output, so Qt is pinned to an
       # exact version and changes when someone changes it, not when the distro updates.
@@ -30,7 +55,7 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: 6.10.2
-          archives: qtbase icu
+          archives: ${{ matrix.qt-archives }}
           cache: true
 
       - name: Versions and Python probes
@@ -39,18 +64,25 @@ jobs:
         # confusing golden-output diff further down.
         run: |
           lldb --version
-          gdb --version | head -1
+          cmake --version | head -1
           qmake -query QT_VERSION
           lldb --batch --no-lldbinit -o "script print('lldb python ok')"
+
+      - name: GDB version and Python probe
+        if: runner.os == 'Linux'
+        run: |
+          gdb --version | head -1
           gdb -q -nx -batch -ex "python print('gdb python ok')"
 
       - name: test
-        run: ./test-printers.sh
+        run: ./test-printers.sh ${{ matrix.suites }}
 
       - name: Upload printer output on failure
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: printer-output
+          # Per platform: the artifact names have to differ, and a diff is only
+          # readable next to the platform it came from anyway.
+          name: printer-output-${{ matrix.name }}
           path: printers/**/tests/*output.txt
           if-no-files-found: ignore
