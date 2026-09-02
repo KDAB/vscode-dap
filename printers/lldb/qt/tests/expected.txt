@@ -23,27 +23,27 @@
   [2] = 3
 }
 (QVector) vecEmpty = QVector<int> (size = 0) {}
-(QList<int>) list = QList<int> (size = 3) {
+(QList) list = QList<int> (size = 3) {
   [0] = 1
   [1] = 2
   [2] = 3
 }
-(QList<int>) listEmpty = QList<int> (size = 0) {}
+(QList) listEmpty = QList<int> (size = 0) {}
 (QStringList) sl = QStringList (size = 2) {
   [0] = "one"
   [1] = "two"
 }
 (QStringList) slEmpty = QStringList (size = 0) {}
-(QQueue<int>) queue = QQueue<int> (size = 2) {
+(QQueue) queue = QQueue<int> (size = 2) {
   [0] = 1
   [1] = 2
 }
-(QQueue<int>) queueEmpty = QQueue<int> (size = 0) {}
-(QStack<int>) stack = QStack<int> (size = 2) {
+(QQueue) queueEmpty = QQueue<int> (size = 0) {}
+(QStack) stack = QStack<int> (size = 2) {
   [0] = 1
   [1] = 2
 }
-(QStack<int>) stackEmpty = QStack<int> (size = 0) {}
+(QStack) stackEmpty = QStack<int> (size = 0) {}
 (QString) str = "hello"
 (QString) strEmpty = ""
 (QString) strEscaped = "he said \"hi\"\nnext"
@@ -77,41 +77,41 @@
 (QUrl) urlInvalid = <invalid>
 (QUrl) urlEmpty = <empty>
 (QUrl) urlPasswordOnly = <empty>
-(QMap<int, QString>) map = QMap<int, QString> (size = 3) {
+(QMap) map = QMap<int, QString> (size = 3) {
   [1] = "one"
   [2] = "two"
   [3] = "three"
 }
-(QMap<int, QString>) mapEmpty = QMap<int, QString> (size = 0) {}
-(QMultiMap<int, QString>) multiMap = QMultiMap<int, QString> (size = 3) {
+(QMap) mapEmpty = QMap<int, QString> (size = 0) {}
+(QMultiMap) multiMap = QMultiMap<int, QString> (size = 3) {
   [1] = "b"
   [1] = "a"
   [2] = "c"
 }
-(QMultiMap<int, QString>) multiMapEmpty = QMultiMap<int, QString> (size = 0) {}
-(QHash<int, QString>) hash = QHash<int, QString> (size = 3) {
+(QMultiMap) multiMapEmpty = QMultiMap<int, QString> (size = 0) {}
+(QHash) hash = QHash<int, QString> (size = 3) {
   [3] = "three"
   [1] = "one"
   [2] = "two"
 }
-(QHash<int, QString>) hashEmpty = QHash<int, QString> (size = 0) {}
-(QMultiHash<int, QString>) multiHash = QMultiHash<int, QString> (size = 3) {
+(QHash) hashEmpty = QHash<int, QString> (size = 0) {}
+(QMultiHash) multiHash = QMultiHash<int, QString> (size = 3) {
   [1] = "b"
   [1] = "a"
   [2] = "c"
 }
-(QMultiHash<int, QString>) multiHashEmpty = QMultiHash<int, QString> (size = 0) {}
-(QSet<int>) set = QSet<int> (size = 3) {
+(QMultiHash) multiHashEmpty = QMultiHash<int, QString> (size = 0) {}
+(QSet) set = QSet<int> (size = 3) {
   [0] = 3
   [1] = 1
   [2] = 2
 }
-(QSet<int>) setEmpty = QSet<int> (size = 0) {}
-(QMap<QString, int>) mapStringKey = QMap<QString, int> (size = 2) {
+(QSet) setEmpty = QSet<int> (size = 0) {}
+(QMap) mapStringKey = QMap<QString, int> (size = 2) {
   ["apple"] = 1
   ["banana"] = 2
 }
-(QHash<QString, int>) hashStringKey = QHash<QString, int> (size = 2) {
+(QHash) hashStringKey = QHash<QString, int> (size = 2) {
   ["banana"] = 2
   ["apple"] = 1
 }

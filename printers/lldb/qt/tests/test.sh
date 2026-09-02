@@ -52,8 +52,18 @@ grep -q "stop reason = breakpoint" lldb-output.txt || {
 # warnings ("error: main 0x...: DW_TAG_member ... extends beyond the bounds of 0x..."): gcc's
 # debug info for some QHashPrivate::Span<Node>::Entry instantiations trips lldb's checker even
 # though the layout is read correctly, so these are noise, not a printer failure.
+#
+# The "(Type)" each line opens with is lldb echoing the variable's declared type
+# out of the debug info, not anything a printer produced, and compilers disagree
+# on how they spell it: gcc collapses the QVector alias to a bare "QVector"
+# where clang keeps "QVector<int>" (see the comment at the top of ../qvector.py,
+# which is why the printers' own summaries agree across compilers even here).
+# Comparing the base name and dropping the template arguments takes that
+# disagreement out of the golden output; the full template spelling stays
+# asserted, since every container printer names it in the summary itself.
 sed -n '/^>>>$/,/^<<<$/p' lldb-output.txt \
-    | grep -v -e '^>>>$' -e '^<<<$' -e '^(lldb) ' -e '^error: main .*: DW_TAG_member ' > output.txt || :
+    | grep -v -e '^>>>$' -e '^<<<$' -e '^(lldb) ' -e '^error: main .*: DW_TAG_member ' \
+    | sed -E 's/^\(([^<>()]+)<.*>\) /(\1) /' > output.txt || :
 
 echo "Comparing output..."
 if diff -u expected.txt output.txt; then
