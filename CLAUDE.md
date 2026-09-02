@@ -34,6 +34,8 @@ npm run compile              # Compile TypeScript to JavaScript
 ./test.sh --lldb             # Integration tests against lldb-dap only
 ./build_package.sh           # Package the extension as a .vsix file
 ./test-printers.sh           # The standalone suites under printers/; needs g++, gdb, lldb and Qt
+./test-printers.sh --lldb    # The lldb printer suite only
+./test-printers.sh --gdb     # The gdb printer suite only
 ```
 
 `./test.sh` wraps `npm test`, which is `npm run test:unit` (plain mocha) followed by
@@ -74,7 +76,7 @@ entry, nothing else.
   `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship) and `printers/gdb/`
   (`kdap_map_hint.py`, which makes gdb's DAP layer pair up the children of a `map`-hinted pretty
   printer instead of showing `[0].key` / `[0].value` rows). Each has a standalone test suite
-  under `tests/`, all of them run by `./test-printers.sh`.
+  under `tests/`, run by `./test-printers.sh` (`--lldb` / `--gdb` narrow it to one).
 
 `arguments.ts`, `configuration.ts`, `version.ts`, `sessionOptions.ts` and `paths.ts` take no
 vscode dependency, which is where the logic lives and where the unit tests reach it; the
@@ -104,9 +106,11 @@ vscode dependency, which is where the logic lives and where the unit tests reach
 - **pre-commit** (`.pre-commit-config.yaml`) only enforces conventional commit messages and
   runs codespell.
 - **GitHub Actions** enforces ESLint and Prettier on every PR and push (`.github/workflows/lints.yml`)
-- CI is Linux-only and split by debugger: `.github/workflows/build-gdb.yml` installs only gdb
-  and runs `./test.sh --gdb`, `.github/workflows/build-lldb.yml` installs only lldb and runs
-  `./test.sh --lldb`.
+- The extension's own CI is Linux-only and split by debugger: `.github/workflows/build-gdb.yml`
+  installs only gdb and runs `./test.sh --gdb`, `.github/workflows/build-lldb.yml` installs only
+  lldb and runs `./test.sh --lldb`. `.github/workflows/test-printers.yml` runs the standalone
+  printer suites on both Linux (both suites) and macOS (`--lldb` only, since gdb isn't a supported
+  debugger there).
 
 ## Conventions
 

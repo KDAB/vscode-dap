@@ -12,6 +12,7 @@ import { DebuggerBackend } from "../../debuggers/backend";
 
 const fixtureDir = path.join(__dirname, "..", "..", "..", "test", "fixtures");
 const sourcePath = path.join(fixtureDir, "hello.c");
+const objectPath = path.join(fixtureDir, "hello.o");
 const programPath = path.join(fixtureDir, "hello");
 
 /**
@@ -19,12 +20,44 @@ const programPath = path.join(fixtureDir, "hello");
  * `remappedSourceDir` instead of where it really is, so that a session can
  * only find it again through `sourceFileMap`.
  */
+const remappedObjectPath = path.join(fixtureDir, "hello-remapped.o");
 const remappedProgramPath = path.join(fixtureDir, "hello-remapped");
 const remappedSourceDir = "/kdap-nonexistent/build";
 
 /** A C++ fixture holding an associative container to inspect. */
 const mapsSourcePath = path.join(fixtureDir, "maps.cpp");
+const mapsObjectPath = path.join(fixtureDir, "maps.o");
 const mapsProgramPath = path.join(fixtureDir, "maps");
+
+/**
+ * Compiles `sourcePath` and links it into `programPath`, as two separate
+ * invocations rather than one `compiler -o programPath sourcePath`. On
+ * Darwin, DWARF stays in the object file and the linked binary only gets a
+ * debug map pointing back at it; a single combined invocation places that
+ * object file under $TMPDIR and deletes it once linking finishes, leaving
+ * the binary's debug info unreadable. Splitting the steps keeps the object
+ * file alive at `objectPath`, which the linked binary's debug map then
+ * points at. A no-op on Linux, where DWARF is embedded in the binary either
+ * way.
+ */
+function buildFixture(
+  compiler: string,
+  sourcePath: string,
+  objectPath: string,
+  programPath: string,
+  extraCompileArgs: readonly string[] = [],
+): void {
+  cp.execFileSync(compiler, [
+    "-g",
+    "-O0",
+    ...extraCompileArgs,
+    "-c",
+    "-o",
+    objectPath,
+    sourcePath,
+  ]);
+  cp.execFileSync(compiler, ["-g", "-O0", "-o", programPath, objectPath]);
+}
 
 // Line 4 (0-based) is `int sum = a + b;` in hello.c.
 const breakpointLine = 3;
@@ -102,22 +135,11 @@ export function defineDebugSuite(target: DebuggerBackend) {
         this.skip();
       }
 
-      cp.execFileSync("gcc", ["-g", "-O0", "-o", programPath, sourcePath]);
-      cp.execFileSync("gcc", [
-        "-g",
-        "-O0",
+      buildFixture("gcc", sourcePath, objectPath, programPath);
+      buildFixture("gcc", sourcePath, remappedObjectPath, remappedProgramPath, [
         `-fdebug-prefix-map=${fixtureDir}=${remappedSourceDir}`,
-        "-o",
-        remappedProgramPath,
-        sourcePath,
       ]);
-      cp.execFileSync("g++", [
-        "-g",
-        "-O0",
-        "-o",
-        mapsProgramPath,
-        mapsSourcePath,
-      ]);
+      buildFixture("g++", mapsSourcePath, mapsObjectPath, mapsProgramPath);
     });
 
     let testIndex = 0;
@@ -143,9 +165,27 @@ export function defineDebugSuite(target: DebuggerBackend) {
       }
     });
 
-    teardown(() => {
+    teardown(async () => {
       vscode.Disposable.from(...disposables).dispose();
       disposables.length = 0;
+
+      // A test that passed already disconnected its own session and removed
+      // its own breakpoints; this only matters when it failed or timed out
+      // first, since a leaked session or breakpoint would otherwise race the
+      // next test's startDebugging.
+      const session = vscode.debug.activeDebugSession;
+      if (session) {
+        try {
+          await disconnectAndWait(session);
+        } catch {
+          // The test already failed; don't mask that with an unrelated
+          // disconnect error.
+        }
+      }
+
+      if (vscode.debug.breakpoints.length !== 0) {
+        vscode.debug.removeBreakpoints([...vscode.debug.breakpoints]);
+      }
     });
 
     test("stops at a breakpoint set on the inferior", async function () {
@@ -193,10 +233,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         "5",
         `${target.displayName} should evaluate 'a + b' as 5 inside add()`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
 
     test("launch config's env is merged into, not replacing, the inferior's environment", async function () {
@@ -240,8 +276,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         inferiorEnv.has(`PATH=${process.env["PATH"]}`),
         "PATH should be inherited unchanged even though the launch config set env",
       );
-
-      await disconnectAndWait(capturedSession);
     });
 
     test("sourceFileMap points the debugger back at a moved source tree", async function () {
@@ -288,10 +322,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         sourcePath,
         `${target.displayName} should report the mapped source path`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
 
     test("an associative container expands to one variable per element", async function () {
@@ -362,10 +392,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
           elements.variables.map((variable) => variable.name),
         )}`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
   });
 }

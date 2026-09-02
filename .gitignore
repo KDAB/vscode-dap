@@ -5,7 +5,9 @@ __pycache__/
 .vscode-test/
 *.vsix
 test/fixtures/hello
+test/fixtures/hello.o
 test/fixtures/hello-remapped
+test/fixtures/hello-remapped.o
 
 # test/cpp_test CMake build artifacts
 test/cpp_test/build-dev
@@ -13,3 +15,4 @@ test/cpp_test/compile_commands.json
 test/cpp_test/.cache
 core
 test/fixtures/maps
+test/fixtures/maps.o

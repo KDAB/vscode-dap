@@ -20,15 +20,22 @@ cd "$SCRIPT_DIR"
 # needed either way, to build the fixture they debug.
 
 UNIT_ONLY=0
+DEBUGGERS=()
 
 for arg in "$@"; do
     case "$arg" in
         --unit) UNIT_ONLY=1 ;;
-        --gdb) export KDAP_TEST_DEBUGGERS=gdb ;;
-        --lldb) export KDAP_TEST_DEBUGGERS=lldb ;;
+        --gdb) DEBUGGERS+=(gdb) ;;
+        --lldb) DEBUGGERS+=(lldb) ;;
         *) echo "Unknown option: $arg" >&2; exit 1 ;;
     esac
 done
+
+if [ "${#DEBUGGERS[@]}" -gt 0 ]; then
+    IFS=,
+    export KDAP_TEST_DEBUGGERS="${DEBUGGERS[*]}"
+    unset IFS
+fi
 
 if [ "$UNIT_ONLY" = "1" ]; then
     echo "Compiling..."
