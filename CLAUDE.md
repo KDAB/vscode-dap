@@ -11,7 +11,11 @@ DAP protocol itself — both debuggers already speak DAP natively (`gdb -i dap`,
 pass it, and hand it to VS Code as the debug adapter process.
 
 Two debug types, one per debugger: `kdap` (gdb, 16.1+) and `kdap-lldb` (lldb-dap, no version
-floor). Linux only, by design.
+floor). Linux and macOS; Windows is out of scope, by design. gdb is Linux-only — macOS requires
+a debugger to be code-signed for debugging and gdb isn't — so macOS means `kdap-lldb`. That is a
+matter of what gets found and tested, not of platform checks in the code: no backend is
+registered or unregistered per platform, `findBinaryInPath` failing already reports itself
+properly, and the integration suite skips a debugger it can't find.
 
 ## Commands
 
@@ -65,13 +69,14 @@ entry, nothing else.
   on the debugger live under `kdap.<backend id>.`; `kdap.logPath` and `kdap.environment` are
   shared.
 - `src/debugAdapterFactory.ts` — resolves the binary (launch config's `debuggerPath` >
-  `kdap.<debugger>.path` setting > the backend's own `PATH` lookup), lets the backend vet it and
+  `kdap.<debugger>.path` setting > the backend's own lookup), lets the backend vet it and
   render the command line, and reports whatever the backend says it can't support.
 - `src/debuggers/gdb/` — `arguments.ts` (argv, `-iex` commands), `version.ts` (the 16.1 floor),
   `prettyPrinters.ts` (the Qt printer download), `backend.ts` (the wiring, plus the
   `inf.clear_env()` workaround that makes a launch config's `env` merge rather than replace).
 - `src/debuggers/lldb/` — `arguments.ts` (`LLDBDAP_LOG`, and the options lldb can't honour),
-  `configuration.ts` (`sourceMap`), `backend.ts` (the wiring).
+  `configuration.ts` (`sourceMap`), `backend.ts` (the wiring, plus the `PATH`-then-`xcrun`
+  lookup that finds the lldb-dap Xcode keeps outside `PATH`).
 - `printers/` — Python a backend loads into its debugger, bundled in the `.vsix`:
   `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship) and `printers/gdb/`
   (`kdap_map_hint.py`, which makes gdb's DAP layer pair up the children of a `map`-hinted pretty
@@ -106,11 +111,13 @@ vscode dependency, which is where the logic lives and where the unit tests reach
 - **pre-commit** (`.pre-commit-config.yaml`) only enforces conventional commit messages and
   runs codespell.
 - **GitHub Actions** enforces ESLint and Prettier on every PR and push (`.github/workflows/lints.yml`)
-- The extension's own CI is Linux-only and split by debugger: `.github/workflows/build-gdb.yml`
-  installs only gdb and runs `./test.sh --gdb`, `.github/workflows/build-lldb.yml` installs only
-  lldb and runs `./test.sh --lldb`. `.github/workflows/test-printers.yml` runs the standalone
-  printer suites on both Linux (both suites) and macOS (`--lldb` only, since gdb isn't a supported
-  debugger there).
+- The extension's own CI is split by debugger, and by platform where a debugger has more than
+  one: `.github/workflows/build-gdb.yml` installs only gdb and runs `./test.sh --gdb`,
+  `.github/workflows/build-lldb.yml` installs only lldb and runs `./test.sh --lldb`, and
+  `.github/workflows/build-lldb-macos.yml` runs the same `--lldb` suite on macOS, where nothing
+  needs installing (Xcode provides lldb-dap and the compilers) and there is no `xvfb-run`.
+  `.github/workflows/test-printers.yml` runs the standalone printer suites on both Linux (both
+  suites) and macOS (`--lldb` only, since gdb isn't a supported debugger there).
 
 ## Conventions
 

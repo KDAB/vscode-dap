@@ -7,22 +7,38 @@ debuggers speak DAP natively — GDB as `gdb -i dap`, LLDB through its `lldb-dap
 extension is a thin layer: it finds a suitable debugger, works out what to pass it, and hands it
 to VS Code as the debug adapter.
 
-Linux only, by design.
+Linux and macOS. Windows is out of scope, by design.
 
 There are two debug types, one per debugger:
 
-| Debug type   | Debugger   | Requires                                      |
-| ------------ | ---------- | --------------------------------------------- |
-| `kdap`       | `gdb`      | GDB 16.1 or later                             |
-| `kdap-lldb`  | `lldb-dap` | LLDB, including its `lldb-dap` binary         |
+| Debug type   | Debugger   | Platforms     | Requires                              |
+| ------------ | ---------- | ------------- | ------------------------------------- |
+| `kdap`       | `gdb`      | Linux         | GDB 16.1 or later                     |
+| `kdap-lldb`  | `lldb-dap` | Linux, macOS  | LLDB, including its `lldb-dap` binary |
 
 GDB 16.1 is the floor because older GDBs run the inferior as part of the DAP `launch` request
 instead of deferring it to `configurationDone`, so breakpoints set before the program starts are
 never hit, and they ignore `stopOnEntry`. LLDB has no comparable floor, so there is no version
 check for it.
 
+gdb is Linux-only here for a reason that isn't the extension's to fix: macOS requires a debugger
+to be code-signed for debugging, and gdb isn't. Use `kdap-lldb` there. Nothing stops a `kdap`
+configuration on macOS if you have a gdb that works — it just won't be found by default.
+
 `lldb-dap` is looked up as `lldb-dap`, falling back to the highest `lldb-dap-<version>` on
-`PATH`, since distributions often ship only the suffixed name.
+`PATH`, since distributions often ship only the suffixed name. On macOS, where Xcode and the
+Command Line Tools keep `lldb-dap` inside the developer directory instead of on `PATH`, it then
+asks `xcrun` for it, so a stock install needs no configuration.
+
+### macOS and code signing
+
+The `lldb-dap` that comes with Xcode is signed for debugging and works as-is. One from Homebrew
+or an LLVM release is only ad-hoc signed, and launching under it fails with
+`attach failed (Not allowed to attach to process)` until its `debugserver` is signed with
+`com.apple.security.cs.debugger`, or `LLDB_DEBUGSERVER_PATH` points at Xcode's. Since `PATH` is
+searched before `xcrun`, an unsigned one on `PATH` is what gets picked — set `kdap.lldb.path` to
+Xcode's, or unset it from `PATH`, if you hit this. Attaching by `pid` to a process you don't own
+needs elevation on macOS, as it does elsewhere.
 
 ## Usage
 
@@ -101,7 +117,8 @@ warning says what was ignored.
 ## Settings
 
 - `kdap.gdb.path`: Path to the gdb binary. Defaults to searching `PATH`.
-- `kdap.lldb.path`: Path to the lldb-dap binary. Defaults to searching `PATH`.
+- `kdap.lldb.path`: Path to the lldb-dap binary. Defaults to searching `PATH`, then `xcrun` on
+  macOS.
 - `kdap.logPath`: Enable DAP logging to this file, for whichever debugger is in use.
 - `kdap.gdb.logLevel`: gdb's DAP logging verbosity (default `1`). gdb only; lldb-dap has no
   equivalent.
@@ -112,7 +129,8 @@ warning says what was ignored.
 - **KDAB DAP: Download Qt Pretty Printers** — downloads the
   [KDevelop Qt gdb pretty-printer scripts](https://github.com/iamsergio/kdevelop/tree/vscode-gdb-dap/plugins/gdb/printers)
   into the extension's global storage. Run this once via the Command Palette to enable Qt
-  pretty-printing (see `qtPrettyPrinters` above).
+  pretty-printing (see `qtPrettyPrinters` above). Linux only, being for gdb; lldb's Qt
+  pretty-printers ship with the extension and need no download.
 - **KDAB DAP: Debug with Args** — starts one of your launch configurations, prompting for the
   arguments to pass to the inferior instead of using the configuration's `args`. The input is
   split like a shell splits a command line, so quote arguments containing spaces.
@@ -121,4 +139,4 @@ warning says what was ignored.
 - **KDAB DAP: Load Core File** — starts one of your `attach` configurations against a core dump,
   prompting for the core file and program if the configuration doesn't name them.
 
-All of these work with both debug types.
+The last three work with both debug types, on both platforms.

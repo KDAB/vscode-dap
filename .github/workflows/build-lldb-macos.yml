@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: MIT
+
+# CI that builds this vscode extension and runs its integration tests against lldb-dap on macOS.
+# The Linux counterpart is build-lldb.yml; gdb has no macOS job, being unusable there.
+
+name: build-lldb-macos
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Pinned rather than macos-latest, the same way the Linux jobs pin their
+    # image: which Xcode the runner carries decides whether lldb-dap exists
+    # at all, so it shouldn't change under us without a commit saying so.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: |
+          npm install --loglevel verbose
+          npm install @vscode/vsce typescript -g
+
+      # No package installation step: lldb-dap, clang and the gcc/g++ shims
+      # the integration suite builds its fixtures with all come from the
+      # Xcode that the runner image already has.
+
+      - name: Check lldb-dap and the toolchain
+        # Xcode keeps lldb-dap inside the developer directory rather than on
+        # PATH - which is the whole reason the extension asks xcrun for it -
+        # so this failing is the single most likely way this job breaks on a
+        # future runner image, and it should fail here, saying so plainly.
+        run: |
+          xcode-select -p
+          xcodebuild -version
+          # lldb-dap --version prints nothing, so report lldb's instead.
+          lldb --version
+          xcrun -f lldb-dap
+
+      - name: Probe lldb-dap directly (no VS Code involved)
+        # Isolates a hang in lldb-dap/the runner itself from a hang that's
+        # specific to the VS Code extension host, before sinking three
+        # minutes into the mocha timeouts that a hang in the real suite costs.
+        # Needs the path spelling out: the script's own default is a bare
+        # "lldb-dap", which is exactly what doesn't resolve here.
+        run: node scripts/probe-lldb-dap.js "$(xcrun -f lldb-dap)" 20000
+
+      - name: compile
+        run: npm run compile
+
+      - name: test
+        env:
+          KDAP_TEST_DAP_LOG_DIR: ${{ runner.temp }}/dap-logs
+        # No xvfb-run: unlike the Linux runners, this one has a window server
+        # of its own, so VS Code starts without a virtual display. No
+        # KDAB_DAP_DISABLE_DEBUGINFOD either - debuginfod is an elfutils
+        # thing, and neither the system lldb nor a Mach-O target consults it.
+        run: |
+          mkdir -p "$KDAP_TEST_DAP_LOG_DIR"
+          ./test.sh --lldb
+
+      - name: Dump process state on failure
+        if: failure()
+        # The macOS counterpart of build-lldb.yml's post-mortem: same
+        # question - did a session start and get stuck before disconnecting? -
+        # asked with the tools this platform has. There is no /proc to read,
+        # and no gdb to take a backtrace with, so this uses ps and lsof, plus
+        # sample for a stack of whatever is still alive.
+        run: |
+          set +e
+          ps -eo pid,ppid,stat,wchan,command
+          echo "---"
+          for pid in $(pgrep -f 'lldb-dap|lldb-server|debugserver|/env_dump$|/hello$'); do
+            echo "=== $pid ==="
+            ps -o pid,ppid,stat,command -p "$pid"
+            echo "--- open files ---"
+            lsof -p "$pid" 2>&1 | head -40
+            echo "--- sample ---"
+            # Apple's sampling profiler: a few seconds of stacks is enough to
+            # show which syscall or lock a stuck process is parked in.
+            sample "$pid" 2 -mayDie 2>&1 | head -60
+          done
+          echo "---"
+          # Whether anything is still listening for a GDB-remote connection.
+          netstat -an -p tcp 2>&1 | head -40
+
+      - name: Upload DAP logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dap-logs-macos
+          path: ${{ runner.temp }}/dap-logs
+          if-no-files-found: ignore
+
+      - name: vsce package
+        run: vsce package
