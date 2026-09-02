@@ -12,6 +12,7 @@ import { DebuggerBackend } from "../../debuggers/backend";
 
 const fixtureDir = path.join(__dirname, "..", "..", "..", "test", "fixtures");
 const sourcePath = path.join(fixtureDir, "hello.c");
+const objectPath = path.join(fixtureDir, "hello.o");
 const programPath = path.join(fixtureDir, "hello");
 
 /**
@@ -19,12 +20,44 @@ const programPath = path.join(fixtureDir, "hello");
  * `remappedSourceDir` instead of where it really is, so that a session can
  * only find it again through `sourceFileMap`.
  */
+const remappedObjectPath = path.join(fixtureDir, "hello-remapped.o");
 const remappedProgramPath = path.join(fixtureDir, "hello-remapped");
 const remappedSourceDir = "/kdap-nonexistent/build";
 
 /** A C++ fixture holding an associative container to inspect. */
 const mapsSourcePath = path.join(fixtureDir, "maps.cpp");
+const mapsObjectPath = path.join(fixtureDir, "maps.o");
 const mapsProgramPath = path.join(fixtureDir, "maps");
+
+/**
+ * Compiles `sourcePath` and links it into `programPath`, as two separate
+ * invocations rather than one `compiler -o programPath sourcePath`. On
+ * Darwin, DWARF stays in the object file and the linked binary only gets a
+ * debug map pointing back at it; a single combined invocation places that
+ * object file under $TMPDIR and deletes it once linking finishes, leaving
+ * the binary's debug info unreadable. Splitting the steps keeps the object
+ * file alive at `objectPath`, which the linked binary's debug map then
+ * points at. A no-op on Linux, where DWARF is embedded in the binary either
+ * way.
+ */
+function buildFixture(
+  compiler: string,
+  sourcePath: string,
+  objectPath: string,
+  programPath: string,
+  extraCompileArgs: readonly string[] = [],
+): void {
+  cp.execFileSync(compiler, [
+    "-g",
+    "-O0",
+    ...extraCompileArgs,
+    "-c",
+    "-o",
+    objectPath,
+    sourcePath,
+  ]);
+  cp.execFileSync(compiler, ["-g", "-O0", "-o", programPath, objectPath]);
+}
 
 // Line 4 (0-based) is `int sum = a + b;` in hello.c.
 const breakpointLine = 3;
@@ -102,22 +135,11 @@ export function defineDebugSuite(target: DebuggerBackend) {
         this.skip();
       }
 
-      cp.execFileSync("gcc", ["-g", "-O0", "-o", programPath, sourcePath]);
-      cp.execFileSync("gcc", [
-        "-g",
-        "-O0",
+      buildFixture("gcc", sourcePath, objectPath, programPath);
+      buildFixture("gcc", sourcePath, remappedObjectPath, remappedProgramPath, [
         `-fdebug-prefix-map=${fixtureDir}=${remappedSourceDir}`,
-        "-o",
-        remappedProgramPath,
-        sourcePath,
       ]);
-      cp.execFileSync("g++", [
-        "-g",
-        "-O0",
-        "-o",
-        mapsProgramPath,
-        mapsSourcePath,
-      ]);
+      buildFixture("g++", mapsSourcePath, mapsObjectPath, mapsProgramPath);
     });
 
     let testIndex = 0;

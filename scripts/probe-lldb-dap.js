@@ -36,6 +36,7 @@ function fail(message) {
 
 const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "kdap-probe-"));
 const sourcePath = path.join(workDir, "hello.c");
+const objectPath = path.join(workDir, "hello.o");
 const programPath = path.join(workDir, "hello");
 fs.writeFileSync(
   sourcePath,
@@ -48,7 +49,12 @@ fs.writeFileSync(
     "",
   ].join("\n"),
 );
-cp.execFileSync("gcc", ["-g", "-O0", "-o", programPath, sourcePath]);
+// Compile and link separately: on Darwin a single combined invocation puts
+// the object file under $TMPDIR and deletes it once linking finishes,
+// leaving the binary's debug map pointing at nothing. See debugSuite.ts's
+// buildFixture() for the same split and the full reasoning.
+cp.execFileSync("gcc", ["-g", "-O0", "-c", "-o", objectPath, sourcePath]);
+cp.execFileSync("gcc", ["-g", "-O0", "-o", programPath, objectPath]);
 log("built", programPath);
 
 log("spawning", BIN);
