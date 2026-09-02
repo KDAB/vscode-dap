@@ -143,9 +143,27 @@ export function defineDebugSuite(target: DebuggerBackend) {
       }
     });
 
-    teardown(() => {
+    teardown(async () => {
       vscode.Disposable.from(...disposables).dispose();
       disposables.length = 0;
+
+      // A test that passed already disconnected its own session and removed
+      // its own breakpoints; this only matters when it failed or timed out
+      // first, since a leaked session or breakpoint would otherwise race the
+      // next test's startDebugging.
+      const session = vscode.debug.activeDebugSession;
+      if (session) {
+        try {
+          await disconnectAndWait(session);
+        } catch {
+          // The test already failed; don't mask that with an unrelated
+          // disconnect error.
+        }
+      }
+
+      if (vscode.debug.breakpoints.length !== 0) {
+        vscode.debug.removeBreakpoints([...vscode.debug.breakpoints]);
+      }
     });
 
     test("stops at a breakpoint set on the inferior", async function () {
@@ -193,10 +211,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         "5",
         `${target.displayName} should evaluate 'a + b' as 5 inside add()`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
 
     test("launch config's env is merged into, not replacing, the inferior's environment", async function () {
@@ -240,8 +254,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         inferiorEnv.has(`PATH=${process.env["PATH"]}`),
         "PATH should be inherited unchanged even though the launch config set env",
       );
-
-      await disconnectAndWait(capturedSession);
     });
 
     test("sourceFileMap points the debugger back at a moved source tree", async function () {
@@ -288,10 +300,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
         sourcePath,
         `${target.displayName} should report the mapped source path`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
 
     test("an associative container expands to one variable per element", async function () {
@@ -362,10 +370,6 @@ export function defineDebugSuite(target: DebuggerBackend) {
           elements.variables.map((variable) => variable.name),
         )}`,
       );
-
-      await disconnectAndWait(capturedSession);
-
-      vscode.debug.removeBreakpoints([breakpoint]);
     });
   });
 }
