@@ -2,33 +2,24 @@
 # SPDX-License-Identifier: MIT
 
 # QUrl's only member is "d" (QUrlPrivate *, null for a default-constructed/invalid QUrl).
-# QUrlPrivate itself is defined only in qtbase's qurl.cpp, never in any header - unlike every
-# other type here, whose layout comes from a header the debuggee's own translation unit
-# includes, LLDB can only see QUrlPrivate's members if QtCore's own shared library carries debug
-# info for them. A from-source Qt build does; a stripped one doesn't, and that covers most
-# packaged Qt installs - Ubuntu's qt6-base-dev keeps those symbols in a separate -dbgsym package,
-# and Qt's own binaries in the separately-installable "debug_info" module (which is why
-# .github/workflows/test-printers.yml installs Qt through aqtinstall rather than from apt). With
-# a stripped Qt, format_value() returns None, same as any other "unrecognised layout" case -
-# falling back to the default struct display of the raw "d" pointer rather than anything actively
-# wrong.
-#
-# Because of that, plain SBValue.Dereference() on "d" doesn't work here: it resolves against the
-# pointee type as the debuggee's own translation unit saw it, which - QUrlPrivate never being
-# defined in any header it could have included - is just an incomplete forward declaration, so
-# Dereference() returns an invalid value even when libQt6Core's debug info fully describes the
-# type. SBTarget.FindFirstType() instead searches every loaded module's debug info (including
-# libQt6Core's own), finds the complete definition there, and CreateValueFromAddress() can then
-# build a properly-typed value at "d"'s address directly - the same completion an interactive
-# "expr -- *url.d" gets from LLDB's C++ expression evaluator, just reached through the plain
-# SBValue API instead.
+# QUrlPrivate itself is defined only in qtbase's qurl.cpp, never in any header, so LLDB can't
+# resolve its layout from debug info the way it can for every other type here: unlike a plain
+# member access or a type looked up by name, there's no complete QUrlPrivate type to be found
+# anywhere unless QtCore's own shared library happens to carry debug info for it (most packaged
+# Qt installs don't). Rather than depend on that, this reads QUrlPrivate's relevant prefix at
+# hand-pinned byte offsets, the same technique the reference gdb printer uses: this project only
+# targets Qt6, and Qt6's QUrlPrivate starts with "QAtomicInt ref; int port; QString scheme,
+# userName, password, host, path, query, fragment" - a layout pinned by hand from qtbase's
+# source, not read from debug info, so it works regardless of whether Qt's own binaries were
+# built with debug info at all.
 #
 # QUrlPrivate's relevant members: "port" (int, -1 when absent) and six plain QString members -
 # "scheme", "userName", "host", "path", "query", "fragment" (read via _common.qstring_text(),
 # which returns their raw decoded text rather than qstring.py's own quoted/escaped display form,
 # since these get spliced back together into one URL string here rather than shown individually).
 # "password" is deliberately never read: both the reference gdb printer and Qt's own QDebug
-# operator<<(QUrl) omit it from their default display, and this follows suit.
+# operator<<(QUrl) omit it from their default display, and this follows suit - its offset is
+# still skipped over so the QString members after it land at the right address.
 #
 # This only reassembles the common "scheme://[user@]host[:port]path[?query][#fragment]" shape;
 # schemes with no authority component (e.g. "mailto:foo@example.com") aren't handled specially,
@@ -55,6 +46,8 @@
 # only a password, which is deliberately not read. Hence "<empty>" rather than reusing
 # "<invalid>", which would be an outright false claim about the latter.
 
+import lldb
+
 from . import _common
 
 
@@ -65,20 +58,40 @@ def format_value(valobj):
     address = d.GetValueAsUnsigned()
     if address == 0:
         return "<invalid>"
-    # See the module comment above for why this doesn't just use d.Dereference().
-    qurlprivate_type = valobj.GetTarget().FindFirstType("QUrlPrivate")
-    if not qurlprivate_type.IsValid():
+    # Builtin type, always resolvable regardless of debug info - unlike a FindFirstType("int")
+    # string lookup.
+    int_type = valobj.GetTarget().GetBasicType(lldb.eBasicTypeInt)
+    # Safe to look up by name here (unlike QUrlPrivate): QString is declared in a header the
+    # debuggee's own translation unit includes, so its debug info always comes from the debuggee.
+    string_type = valobj.GetTarget().FindFirstType("QString")
+    if not string_type.IsValid():
         return None
-    priv = d.CreateValueFromAddress("QUrlPrivate", address, qurlprivate_type)
+    int_size = int_type.GetByteSize()
+    string_size = string_type.GetByteSize()
+    # See the module comment above for the QUrlPrivate layout these offsets walk.
+    port_addr = address + int_size
+    port_value = d.CreateValueFromAddress("port", port_addr, int_type)
+    scheme_addr = address + 2 * int_size
+    user_name_addr = scheme_addr + string_size
+    host_addr = user_name_addr + 2 * string_size  # skip password
+    path_addr = host_addr + string_size
+    query_addr = path_addr + string_size
+    fragment_addr = query_addr + string_size
     # None from qstring_text() means the member couldn't be read at all, which is not the same
     # thing as an absent component, so every one of them has to be checked before any is used:
     # letting a None through would just make that component test as falsy below and silently
     # drop out of the URL, turning a failed read into a plausible-looking wrong answer.
     texts = [
-        _common.qstring_text(priv.GetChildMemberWithName(name))
-        for name in ("scheme", "userName", "host", "path", "query", "fragment")
+        _common.qstring_text(d.CreateValueFromAddress(name, addr, string_type))
+        for name, addr in (
+            ("scheme", scheme_addr),
+            ("userName", user_name_addr),
+            ("host", host_addr),
+            ("path", path_addr),
+            ("query", query_addr),
+            ("fragment", fragment_addr),
+        )
     ]
-    port_value = priv.GetChildMemberWithName("port")
     if any(text is None for text in texts) or not port_value.IsValid():
         return None
     scheme, user_name, host, path, query, fragment = texts
