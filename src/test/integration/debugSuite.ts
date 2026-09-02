@@ -29,6 +29,11 @@ const mapsSourcePath = path.join(fixtureDir, "maps.cpp");
 const mapsObjectPath = path.join(fixtureDir, "maps.o");
 const mapsProgramPath = path.join(fixtureDir, "maps");
 
+/** Dumps its own environment to the file named by argv[1]; see env_dump.c. */
+const envDumpSourcePath = path.join(fixtureDir, "env_dump.c");
+const envDumpObjectPath = path.join(fixtureDir, "env_dump.o");
+const envDumpProgramPath = path.join(fixtureDir, "env_dump");
+
 /**
  * Compiles `sourcePath` and links it into `programPath`, as two separate
  * invocations rather than one `compiler -o programPath sourcePath`. On
@@ -140,6 +145,12 @@ export function defineDebugSuite(target: DebuggerBackend) {
         `-fdebug-prefix-map=${fixtureDir}=${remappedSourceDir}`,
       ]);
       buildFixture("g++", mapsSourcePath, mapsObjectPath, mapsProgramPath);
+      buildFixture(
+        "gcc",
+        envDumpSourcePath,
+        envDumpObjectPath,
+        envDumpProgramPath,
+      );
     });
 
     let testIndex = 0;
@@ -238,35 +249,44 @@ export function defineDebugSuite(target: DebuggerBackend) {
     test("launch config's env is merged into, not replacing, the inferior's environment", async function () {
       this.timeout(60000);
 
-      const processStarted = waitForDapEvent<{ systemProcessId?: number }>(
+      // A fresh path per test run: env_dump writes it fresh on every launch,
+      // but starting from nothing rules out a stale file from an earlier
+      // failed run being read as if it were this run's.
+      const envDumpOutputPath = path.join(
+        os.tmpdir(),
+        `kdap-env-dump-${target.id}.bin`,
+      );
+      await fs.rm(envDumpOutputPath, { force: true });
+
+      const exited = waitForDapEvent<{ exitCode?: number }>(
         target.debugType,
-        "process",
-        (body) => body.systemProcessId !== undefined,
+        "exited",
+        () => true,
       );
 
       const started = await vscode.debug.startDebugging(undefined, {
         type: target.debugType,
         request: "launch",
         name: `${target.displayName} env merge test`,
-        program: programPath,
+        program: envDumpProgramPath,
+        args: [envDumpOutputPath],
         cwd: fixtureDir,
-        stopOnEntry: true,
+        stopOnEntry: false,
         env: { KDAP_TEST_VAR: "hello" },
       });
       assert.ok(started, "debug session should start");
       const capturedSession = vscode.debug.activeDebugSession;
       assert.ok(capturedSession, "there should be an active debug session");
 
-      const { systemProcessId } = await processStarted;
+      // Wait for the inferior to actually exit before reading what it wrote:
+      // by then env_dump has already returned from fclose(), so the file is
+      // complete.
+      await exited;
 
-      // Read the inferior's real environment directly, rather than via the
-      // debugger's "evaluate", since calling getenv() through evaluate makes
-      // gdb emit a spurious DAP "continued" event partway through the call.
-      const environ = await fs.readFile(
-        `/proc/${systemProcessId}/environ`,
-        "utf8",
+      const dumped = await fs.readFile(envDumpOutputPath);
+      const inferiorEnv = new Set(
+        dumped.toString("utf8").split("\0").filter(Boolean),
       );
-      const inferiorEnv = new Set(environ.split("\0").filter(Boolean));
 
       assert.ok(
         inferiorEnv.has("KDAP_TEST_VAR=hello"),
