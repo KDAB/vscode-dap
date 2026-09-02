@@ -2,24 +2,18 @@
 # SPDX-License-Identifier: MIT
 
 # QUrl's only member is "d" (QUrlPrivate *, null for a default-constructed/invalid QUrl).
-# QUrlPrivate itself is defined only in qtbase's qurl.cpp, never in any header, so LLDB can't
-# resolve its layout from debug info the way it can for every other type here: unlike a plain
-# member access or a type looked up by name, there's no complete QUrlPrivate type to be found
-# anywhere unless QtCore's own shared library happens to carry debug info for it (most packaged
-# Qt installs don't). Rather than depend on that, this reads QUrlPrivate's relevant prefix at
-# hand-pinned byte offsets, the same technique the reference gdb printer uses: this project only
-# targets Qt6, and Qt6's QUrlPrivate starts with "QAtomicInt ref; int port; QString scheme,
-# userName, password, host, path, query, fragment" - a layout pinned by hand from qtbase's
-# source, not read from debug info, so it works regardless of whether Qt's own binaries were
-# built with debug info at all.
+# QUrlPrivate itself is defined only in qtbase's qurl.cpp, never in any header, so - unlike every
+# other type here - its layout can't be had from the debuggee's own debug info (see README.md).
+# Rather than depend on QtCore's own binaries carrying it, this walks QUrlPrivate's relevant
+# prefix at byte offsets pinned by hand from qtbase's source, the same technique the reference
+# gdb printer uses, which works whether Qt was built with debug info or not.
 #
-# QUrlPrivate's relevant members: "port" (int, -1 when absent) and six plain QString members -
-# "scheme", "userName", "host", "path", "query", "fragment" (read via _common.qstring_text(),
-# which returns their raw decoded text rather than qstring.py's own quoted/escaped display form,
-# since these get spliced back together into one URL string here rather than shown individually).
-# "password" is deliberately never read: both the reference gdb printer and Qt's own QDebug
-# operator<<(QUrl) omit it from their default display, and this follows suit - its offset is
-# still skipped over so the QString members after it land at the right address.
+# Of those members, "port" (int, -1 when absent) and six of the seven QStrings are read via
+# _common.qstring_text(), which returns their raw decoded text rather than qstring.py's own
+# quoted/escaped display form, since these get spliced back together into one URL string here
+# rather than shown individually. "password" is the seventh, and is deliberately never read: both
+# the reference gdb printer and Qt's own QDebug operator<<(QUrl) omit it from their default
+# display, and this follows suit.
 #
 # This only reassembles the common "scheme://[user@]host[:port]path[?query][#fragment]" shape;
 # schemes with no authority component (e.g. "mailto:foo@example.com") aren't handled specially,
@@ -50,6 +44,14 @@ import lldb
 
 from . import _common
 
+# QUrlPrivate's layout, pinned by hand from qtbase's qurl.cpp rather than read from debug info:
+# "QAtomicInt ref; int port;" followed by these seven QStrings, in this order.
+_STRING_MEMBERS = ("scheme", "userName", "password", "host", "path", "query", "fragment")
+
+# "password" is deliberately never read (see above); it is in _STRING_MEMBERS only so that the
+# members after it land at the right offset.
+_READ_MEMBERS = tuple(name for name in _STRING_MEMBERS if name != "password")
+
 
 def format_value(valobj):
     d = valobj.GetChildMemberWithName("d")
@@ -58,43 +60,31 @@ def format_value(valobj):
     address = d.GetValueAsUnsigned()
     if address == 0:
         return "<invalid>"
-    # Builtin type, always resolvable regardless of debug info - unlike a FindFirstType("int")
-    # string lookup.
-    int_type = valobj.GetTarget().GetBasicType(lldb.eBasicTypeInt)
-    # Safe to look up by name here (unlike QUrlPrivate): QString is declared in a header the
-    # debuggee's own translation unit includes, so its debug info always comes from the debuggee.
-    string_type = valobj.GetTarget().FindFirstType("QString")
+    target = valobj.GetTarget()
+    # "int" is a builtin type, so it resolves regardless of debug info; QString is declared in a
+    # header the debuggee's own translation unit includes, so its layout always comes from the
+    # debuggee. Neither is the problem QUrlPrivate is (see above).
+    int_type = target.GetBasicType(lldb.eBasicTypeInt)
+    string_type = target.FindFirstType("QString")
     if not string_type.IsValid():
         return None
-    int_size = int_type.GetByteSize()
-    string_size = string_type.GetByteSize()
-    # See the module comment above for the QUrlPrivate layout these offsets walk.
-    port_addr = address + int_size
-    port_value = d.CreateValueFromAddress("port", port_addr, int_type)
-    scheme_addr = address + 2 * int_size
-    user_name_addr = scheme_addr + string_size
-    host_addr = user_name_addr + 2 * string_size  # skip password
-    path_addr = host_addr + string_size
-    query_addr = path_addr + string_size
-    fragment_addr = query_addr + string_size
+    # Walk the members in declaration order, the same cursor walk the reference printer does.
+    offset = int_type.GetByteSize()  # past "ref"
+    port_value = d.CreateValueFromAddress("port", address + offset, int_type)
+    offset += int_type.GetByteSize()
     # None from qstring_text() means the member couldn't be read at all, which is not the same
     # thing as an absent component, so every one of them has to be checked before any is used:
     # letting a None through would just make that component test as falsy below and silently
     # drop out of the URL, turning a failed read into a plausible-looking wrong answer.
-    texts = [
-        _common.qstring_text(d.CreateValueFromAddress(name, addr, string_type))
-        for name, addr in (
-            ("scheme", scheme_addr),
-            ("userName", user_name_addr),
-            ("host", host_addr),
-            ("path", path_addr),
-            ("query", query_addr),
-            ("fragment", fragment_addr),
-        )
-    ]
-    if any(text is None for text in texts) or not port_value.IsValid():
+    texts = {}
+    for name in _STRING_MEMBERS:
+        if name in _READ_MEMBERS:
+            member = d.CreateValueFromAddress(name, address + offset, string_type)
+            texts[name] = _common.qstring_text(member)
+        offset += string_type.GetByteSize()
+    if any(text is None for text in texts.values()) or not port_value.IsValid():
         return None
-    scheme, user_name, host, path, query, fragment = texts
+    scheme, user_name, host, path, query, fragment = (texts[name] for name in _READ_MEMBERS)
     parts = []
     if scheme:
         parts.append(scheme + "://")
