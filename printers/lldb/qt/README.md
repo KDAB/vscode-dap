@@ -254,6 +254,28 @@ valid time (`13:45:30.500`, no `QTime(...)` wrapper), and its `invalid QTime` te
 `QDate`'s broken invalid case - is already sensible, so there's nothing to gain from falling back
 to real `QDebug`'s own `QTime(Invalid)` the way `qdate.py` does for `QDate`.
 
+**`QUrl` (`qurl.py`) is the one type here whose layout doesn't come from debug info.** Its only
+member is `d` (a `QUrlPrivate *`, null for a default-constructed/invalid `QUrl`), and
+`QUrlPrivate` is defined *only* inside qtbase's `qurl.cpp`, never in any header. Every other type
+here has its layout in a header the debuggee's own translation unit includes, so LLDB sees it
+regardless of how Qt itself was built; `QUrlPrivate` has no such header, so neither a member
+access through `d` nor a `FindFirstType("QUrlPrivate")` lookup finds a complete type unless
+`libQt6Core`'s *own* debug info happens to describe it - which most packaged Qt installs
+(Ubuntu's `qt6-base-dev`, Qt's own binaries without the `debug_info` module) don't ship. So
+`qurl.py` reads the members it needs at byte offsets pinned by hand from qtbase's source
+(`QAtomicInt ref; int port;` then seven `QString`s), exactly as the reference gdb printer does,
+and works against a stripped Qt. `password` is one of those seven and is deliberately never
+read - both the reference and Qt's own `QDebug operator<<(QUrl)` omit it - but it still has to
+be stepped over so the members after it land at the right address.
+
+A null `d` prints `<invalid>`; a `d` whose components re-assemble to nothing prints `<empty>`,
+which is this printer's own addition rather than the reference's. That case can't just return
+`""`: an empty summary makes LLDB drop the summary and expand the struct instead, showing the raw
+`d` pointer the printer exists to replace. `QUrl("")` lands there (it allocates a `d`, so it isn't
+the `<invalid>` case, even though `QUrl::isValid()` is false for it), and so does the one *valid*
+URL that can re-assemble to nothing: a `QUrl` carrying only a password. `qurl.py`'s module comment
+has the rest - the re-assembled format, and where it deliberately departs from the reference.
+
 **`QLatin1String` (`qlatin1string.py`) has no gdb reference printer and a different escaping rule
 from `QString`'s**, both pinned down the same way as `QPointF`/`QSizeF`/etc: compiling and running
 `qDebug() << value` against a real Qt build (see "Adding a type" above). `QLatin1String` is
