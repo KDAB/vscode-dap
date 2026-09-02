@@ -27,6 +27,7 @@ jobs:
       - name: Package
         run: |
           vsce package
+          for f in dap-*.vsix; do mv "$f" "kdab-$f"; done
 
       - name: Upload asset
         run: |
