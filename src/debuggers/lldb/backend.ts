@@ -4,7 +4,10 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { findVersionedExecutableInPath } from "../../paths";
+import {
+  findInDeveloperToolchain,
+  findVersionedExecutableInPath,
+} from "../../paths";
 import { SessionOptions } from "../../sessionOptions";
 import { AdapterCommand, BackendContext, DebuggerBackend } from "../backend";
 import { buildLldbAdapterCommand } from "./arguments";
@@ -32,8 +35,19 @@ export class LldbBackend implements DebuggerBackend {
   readonly pathSettingKey = "kdap.lldb.path";
   readonly installHint = "Install LLDB, including its lldb-dap binary";
 
-  findBinaryInPath(): Promise<string | undefined> {
-    return findVersionedExecutableInPath("lldb-dap");
+  /**
+   * PATH first, then the developer toolchain: a binary the user has put on
+   * PATH is the one they have chosen to mean "lldb-dap", while on macOS the
+   * usual case is that there is none, because Xcode keeps lldb-dap inside
+   * the developer directory instead. Nothing else has to change for that
+   * platform - Apple's own copy is signed for debugging, whereas a
+   * PATH-installed one may not be.
+   */
+  async findBinaryInPath(): Promise<string | undefined> {
+    return (
+      (await findVersionedExecutableInPath("lldb-dap")) ??
+      (await findInDeveloperToolchain("lldb-dap"))
+    );
   }
 
   checkBinary(): Promise<string | undefined> {
