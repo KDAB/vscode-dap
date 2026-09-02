@@ -5,9 +5,13 @@
 // plain mocha instead of needing a VS Code instance. Callers that hold a
 // `vscode.WorkspaceFolder` pass its `uri.fsPath` rather than the folder.
 
+import { execFile } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 /**
  * Whether `filePath` is a regular file the current user can execute. The
@@ -143,6 +147,55 @@ export async function findVersionedExecutableInPath(
   }
 
   return best?.path;
+}
+
+/** How long to wait for `xcrun` before giving up on it. */
+const TOOLCHAIN_QUERY_TIMEOUT_MS = 10_000;
+
+/**
+ * The path to `name` inside the active developer toolchain, if it has one.
+ *
+ * This exists for tools a platform keeps outside PATH entirely: macOS ships
+ * some of its toolchain inside the Xcode or Command Line Tools directory
+ * that `xcode-select` points at, so a PATH search finds nothing at all even
+ * though the tool is installed. `xcrun -f` is the documented way to ask
+ * where it really is, and it answers for whichever developer directory is
+ * currently selected.
+ *
+ * Returns undefined wherever there is no such toolchain to ask - every
+ * platform but macOS - and on each way the query can fail: no Command Line
+ * Tools installed, `xcode-select` pointing at a directory that has since
+ * been removed, or a toolchain that simply doesn't carry `name`. A toolchain
+ * is a fallback for callers that have already searched PATH, so none of
+ * those is worth reporting as an error in its own right.
+ */
+export async function findInDeveloperToolchain(
+  name: string,
+): Promise<string | undefined> {
+  if (process.platform !== "darwin") {
+    return undefined;
+  }
+
+  let stdout: string;
+  try {
+    ({ stdout } = await execFileAsync("xcrun", ["-f", name], {
+      timeout: TOOLCHAIN_QUERY_TIMEOUT_MS,
+    }));
+  } catch {
+    return undefined;
+  }
+
+  // xcrun prints the path and nothing else, but it reports a tool it can't
+  // find by exit status rather than by printing an empty line, so an empty
+  // answer would be a surprise rather than the normal "not found".
+  const found = stdout.trim();
+  if (!found) {
+    return undefined;
+  }
+
+  // Vetted the same way a PATH hit is: xcrun answers from its own index of
+  // the toolchain, which can still name a tool that isn't there any more.
+  return (await isExecutable(found)) ? found : undefined;
 }
 
 /**

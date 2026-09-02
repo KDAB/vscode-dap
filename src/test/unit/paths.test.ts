@@ -11,6 +11,7 @@ import {
   expandConfigPath,
   expandTilde,
   findExecutableInPath,
+  findInDeveloperToolchain,
   findVersionedExecutableInPath,
   isDirectory,
   isExecutable,
@@ -204,6 +205,114 @@ suite("paths", () => {
         await findVersionedExecutableInPath("lldb-dap"),
         undefined,
       );
+    });
+  });
+
+  suite("findInDeveloperToolchain", () => {
+    const onDarwin = process.platform === "darwin";
+
+    test("finds a tool the toolchain is certain to carry", async function () {
+      if (!onDarwin) {
+        this.skip();
+      }
+      // clang is what the Command Line Tools exist to install, so a macOS
+      // machine that can build the fixtures at all has it.
+      const found = await findInDeveloperToolchain("clang");
+      assert.ok(found, "clang should be in the developer toolchain");
+      assert.ok(path.isAbsolute(found), `${found} should be absolute`);
+    });
+
+    test("returns undefined for a tool no toolchain carries", async () => {
+      // Holds on every platform, if for two different reasons: there is no
+      // xcrun to ask off macOS, and on macOS xcrun fails to find it.
+      assert.strictEqual(
+        await findInDeveloperToolchain("kdap-definitely-not-a-binary"),
+        undefined,
+      );
+    });
+
+    test("returns undefined where there is no developer toolchain at all", async function () {
+      if (onDarwin) {
+        this.skip();
+      }
+      // Not merely "xcrun isn't installed": the platform check means nothing
+      // is executed, so a Linux machine that happens to have something named
+      // xcrun on PATH still gets undefined.
+      assert.strictEqual(await findInDeveloperToolchain("clang"), undefined);
+    });
+
+    // The macOS branch is the entire point of this function and is the one
+    // thing CI never runs, being Linux-only. These drive it against a stub
+    // xcrun so that a regression in it surfaces here rather than on a user's
+    // Mac. The stub shadows the real xcrun on PATH, so these behave the same
+    // on either platform.
+    suite("against a stubbed toolchain", () => {
+      let root: string;
+      let originalPath: string | undefined;
+      const originalPlatform = process.platform;
+
+      function setPlatform(value: string) {
+        // configurable, so that teardown can put the real value back.
+        Object.defineProperty(process, "platform", {
+          value,
+          configurable: true,
+        });
+      }
+
+      setup(async () => {
+        root = await fs.mkdtemp(path.join(os.tmpdir(), "kdap-xcrun-"));
+        // Mirrors the real xcrun: prints just the path on success, and
+        // reports a tool it can't find by exit status, not by output.
+        await fs.writeFile(
+          path.join(root, "xcrun"),
+          [
+            "#!/bin/sh",
+            'case "$2" in',
+            // Something certain to be executable, to stand in for a real
+            // toolchain binary.
+            `  present) echo "${process.execPath}" ;;`,
+            // xcrun answers from its own index, which can name a tool that
+            // has since been removed.
+            '  stale) echo "/nonexistent/kdap-test/stale" ;;',
+            "  silent) ;;",
+            '  *) echo "xcrun: error: unable to find utility" >&2; exit 72 ;;',
+            "esac",
+            "",
+          ].join("\n"),
+          { mode: 0o755 },
+        );
+        originalPath = process.env["PATH"];
+        process.env["PATH"] = [root, originalPath].join(path.delimiter);
+        setPlatform("darwin");
+      });
+
+      teardown(async () => {
+        setPlatform(originalPlatform);
+        process.env["PATH"] = originalPath;
+        await fs.rm(root, { recursive: true, force: true });
+      });
+
+      test("returns what xcrun printed", async () => {
+        assert.strictEqual(
+          await findInDeveloperToolchain("present"),
+          process.execPath,
+        );
+      });
+
+      test("rejects a path xcrun named but that isn't there any more", async () => {
+        assert.strictEqual(await findInDeveloperToolchain("stale"), undefined);
+      });
+
+      test("survives xcrun failing to find the tool", async () => {
+        assert.strictEqual(
+          await findInDeveloperToolchain("missing"),
+          undefined,
+        );
+      });
+
+      test("survives xcrun succeeding but printing nothing", async () => {
+        assert.strictEqual(await findInDeveloperToolchain("silent"), undefined);
+      });
     });
   });
 
