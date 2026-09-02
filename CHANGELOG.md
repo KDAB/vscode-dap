@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.0](https://github.com/KDAB/vscode-dap/compare/v1.2.0...v1.3.0) (2026-09-02)
+
+
+### Features
+
+* find lldb-dap in the Xcode toolchain when PATH has none ([a553f48](https://github.com/KDAB/vscode-dap/commit/a553f487a2e840d0127f4e3f62fa903c12a60791))
+* offer the debugger-agnostic commands on macOS too ([835c0ce](https://github.com/KDAB/vscode-dap/commit/835c0ce2c9ef843f4646c889149fc1b65897b99f))
+
+
+### Bug Fixes
+
+* ./test.sh --gdb --lldb now runs both debuggers, not just lldb ([a6b03fd](https://github.com/KDAB/vscode-dap/commit/a6b03fd134742f53a35fc80cb30a6e6c52c483fe))
+* clean up a leaked debug session and breakpoints in teardown ([7480c6c](https://github.com/KDAB/vscode-dap/commit/7480c6cc787e8d09097e95315669e2ff027a9bd4))
+
 ## [1.2.0](https://github.com/KDAB/vscode-dap/compare/v1.1.0...v1.2.0) (2026-08-25)
 
 
