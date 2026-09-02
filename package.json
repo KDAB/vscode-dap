@@ -78,7 +78,7 @@
         "kdap.lldb.path": {
           "scope": "resource",
           "type": "string",
-          "description": "The path to the lldb-dap binary. Defaults to searching for 'lldb-dap', then 'lldb-dap-<version>', in PATH."
+          "description": "The path to the lldb-dap binary. Defaults to searching for 'lldb-dap', then 'lldb-dap-<version>', in PATH; on macOS, where Xcode keeps lldb-dap out of PATH, it then asks xcrun for it."
         },
         "kdap.logPath": {
           "scope": "resource",
@@ -134,15 +134,15 @@
         },
         {
           "command": "kdap.runWithArgs",
-          "when": "isLinux"
+          "when": "isLinux || isMac"
         },
         {
           "command": "kdap.debugWithArgs",
-          "when": "isLinux"
+          "when": "isLinux || isMac"
         },
         {
           "command": "kdap.loadCoreFile",
-          "when": "isLinux"
+          "when": "isLinux || isMac"
         }
       ]
     },
