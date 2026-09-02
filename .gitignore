@@ -16,3 +16,5 @@ test/cpp_test/.cache
 core
 test/fixtures/maps
 test/fixtures/maps.o
+test/fixtures/env_dump
+test/fixtures/env_dump.o
