@@ -6,12 +6,12 @@
   "publisher": "KDAB",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KDAB/vscode-gdb-dap.git"
+    "url": "https://github.com/KDAB/vscode-dap.git"
   },
   "bugs": {
-    "url": "https://github.com/KDAB/vscode-gdb-dap/issues"
+    "url": "https://github.com/KDAB/vscode-dap/issues"
   },
-  "homepage": "https://github.com/KDAB/vscode-gdb-dap#readme",
+  "homepage": "https://github.com/KDAB/vscode-dap#readme",
   "engines": {
     "vscode": "^1.90.0"
   },
