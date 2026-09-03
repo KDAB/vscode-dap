@@ -11,7 +11,7 @@ def qsizef_summary(valobj, internal_dict):
         # LLDB renders a summary function's None return as the literal text
         # "None" rather than falling back to the default struct display.
         return ""
-    # same output as QDebug operator<<(QSizeF)
+    # Formatted to print exactly what a qDebug() << of the same QSizeF would.
     return "QSizeF(%g, %g)" % (_common.double(w), _common.double(h))
 
 

@@ -13,8 +13,8 @@ def qrectf_summary(valobj, internal_dict):
         # LLDB renders a summary function's None return as the literal text
         # "None" rather than falling back to the default struct display.
         return ""
-    # same output as QDebug operator<<(QRectF): unlike QRect this stores
-    # width/height directly rather than a second corner.
+    # Formatted to print exactly what a qDebug() << of the same QRectF would. Unlike QRect,
+    # this one stores its width and height directly instead of a second corner.
     return "QRectF(%g,%g %gx%g)" % (
         _common.double(x),
         _common.double(y),

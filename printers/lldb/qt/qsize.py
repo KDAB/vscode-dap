@@ -11,7 +11,7 @@ def qsize_summary(valobj, internal_dict):
         # LLDB renders a summary function's None return as the literal text
         # "None" rather than falling back to the default struct display.
         return ""
-    # same output as QDebug operator<<(QSize)
+    # Formatted to print exactly what a qDebug() << of the same QSize would.
     return "QSize(%d, %d)" % (_common.checked_int(w), _common.checked_int(h))
 
 

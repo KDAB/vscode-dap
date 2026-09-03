@@ -16,8 +16,8 @@ def qline_summary(valobj, internal_dict):
     s2 = qpoint.format_value(pt2)
     if s1 is None or s2 is None:
         return ""
-    # same output as QDebug operator<<(QLine): "QLine(" << p1() << ',' << p2() << ')',
-    # where p1()/p2() are QPoint, so their own operator<< nests inside.
+    # Formatted to print exactly what a qDebug() << of the same QLine would: Qt streams the
+    # two end points, each a QPoint, so QPoint's own rendering nests inside this one.
     return "QLine(%s,%s)" % (s1, s2)
 
 

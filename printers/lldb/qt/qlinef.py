@@ -16,8 +16,8 @@ def qlinef_summary(valobj, internal_dict):
     s2 = qpointf.format_value(pt2)
     if s1 is None or s2 is None:
         return ""
-    # same output as QDebug operator<<(QLineF): "QLineF(" << p1() << ',' << p2() << ')',
-    # where p1()/p2() are QPointF, so their own operator<< nests inside.
+    # Formatted to print exactly what a qDebug() << of the same QLineF would: Qt streams the
+    # two end points, each a QPointF, so QPointF's own rendering nests inside this one.
     return "QLineF(%s,%s)" % (s1, s2)
 
 

@@ -11,7 +11,7 @@ def format_value(valobj):
     y = valobj.GetChildMemberWithName("yp")
     if not x.IsValid() or not y.IsValid():
         return None
-    # same output as QDebug operator<<(QPointF)
+    # Formatted to print exactly what a qDebug() << of the same QPointF would.
     return "QPointF(%g,%g)" % (_common.double(x), _common.double(y))
 
 

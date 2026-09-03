@@ -8,8 +8,9 @@ import lldb
 
 
 def checked_int(value):
-    # Since Qt 6.10 integer coordinates are QtPrivate::QCheckedIntegers::QCheckedInt<int>,
-    # before that plain int.
+    # Qt 6.10 wrapped the geometry types' int members in a QCheckedInt<int> (under
+    # QtPrivate::QCheckedIntegers), which keeps the actual number in a nested "m_i" member;
+    # every earlier Qt stores a plain int there. Both shapes are read here.
     inner = value.GetChildMemberWithName("m_i")
     if inner.IsValid():
         value = inner

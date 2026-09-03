@@ -17,8 +17,8 @@ def qrect_summary(valobj, internal_dict):
     y1 = _common.checked_int(y1v)
     x2 = _common.checked_int(x2v)
     y2 = _common.checked_int(y2v)
-    # same output as QDebug operator<<(QRect): x1,y1 and x2,y2 are corners,
-    # width/height are computed from them.
+    # Formatted to print exactly what a qDebug() << of the same QRect would. What is stored
+    # is the two corners, so the width and height shown have to be derived from them.
     return "QRect(%d,%d %dx%d)" % (x1, y1, x2 - x1 + 1, y2 - y1 + 1)
 
 
