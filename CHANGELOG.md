@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/KDAB/vscode-dap/compare/v1.3.0...v1.3.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* clean out/ before packaging so no dead code ships ([31a202d](https://github.com/KDAB/vscode-dap/commit/31a202db8fdde3d6edf1094dae0fa8bef48039b3))
+* pin the Qt gdb printers to a commit rather than a branch ([93a86a7](https://github.com/KDAB/vscode-dap/commit/93a86a75e19980f32cdef1212eb87f4983bd92fe))
+
 ## [1.3.0](https://github.com/KDAB/vscode-dap/compare/v1.2.0...v1.3.0) (2026-09-02)
 
 
