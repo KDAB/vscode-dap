@@ -7,6 +7,7 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+**/*.sh
 out/test/**
 test/
 scripts/
@@ -24,8 +25,6 @@ CONTRIBUTING.md
 release-please-config.json
 .release-please-manifest.json
 eslint.config.mjs
-build_package.sh
-upload_package.sh
 tsconfig.test.json
 printers/lldb/qt/tests/
 printers/lldb/qt/__pycache__/
