@@ -40,6 +40,11 @@ searched before `xcrun`, an unsigned one on `PATH` is what gets picked — set `
 Xcode's, or unset it from `PATH`, if you hit this. Attaching by `pid` to a process you don't own
 needs elevation on macOS, as it does elsewhere.
 
+## Trying it out
+
+[`examples/`](examples/README.md) has two minimal projects, each with its own VS Code workspace
+and launch configurations already set up.
+
 ## Usage
 
 Create a launch configuration in `.vscode/launch.json`:

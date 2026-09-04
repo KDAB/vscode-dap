@@ -1,0 +1,75 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "extensions": {
+    "recommendations": [
+      "llvm-vs-code-extensions.vscode-clangd",
+      "theqtcompany.qt-qml",
+      "ms-vscode.cmake-tools",
+      "KDAB.qttests",
+      "KDAB.dap"
+    ],
+    "unwantedRecommendations": [
+      "ms-azuretools.vscode-docker"
+    ]
+  },
+  "settings": {
+    "files.trimTrailingWhitespace": true,
+    "editor.formatOnSave": true,
+    "clangd.arguments": [
+      "-header-insertion=never",
+      "--clang-tidy=false"
+    ],
+    "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "cmake.automaticReconfigure": false,
+    "files.insertFinalNewline": true,
+    "cmake.showSystemKits": false,
+    "cmake.enableAutomaticKitScan": false,
+    "cmake.options.statusBarVisibility": "hidden",
+    "cmake.options.advanced": {
+      "configurePreset": {
+        "statusBarVisibility": "visible"
+      },
+      "buildTarget": {
+        "statusBarVisibility": "visible"
+      },
+      "launchTarget": {
+        "statusBarVisibility": "visible",
+        "inheritDefault": "visible"
+      },
+      "debug": {
+        "statusBarVisibility": "hidden"
+      }
+    },
+    "git.blame.ignoreWhitespace": true,
+    "qt-qml.qmlls.verboseOutput": true
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Current Target (GDB)",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "args": [],
+        "cwd": "${command:cmake.buildDirectory}",
+        "env": {},
+        "qtPrettyPrinters": true
+      },
+      {
+        "name": "Current Target (LLDB)",
+        "type": "kdap-lldb",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "args": [],
+        "cwd": "${command:cmake.buildDirectory}",
+        "env": {},
+        "qtPrettyPrinters": true
+      }
+    ]
+  }
+}

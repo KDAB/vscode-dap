@@ -32,3 +32,6 @@ printers/lldb/qt/README.md
 printers/gdb/tests/
 printers/gdb/__pycache__/
 printers/gdb/README.md
+examples/**/build-*/
+examples/**/.cache/
+examples/**/compile_commands.json
