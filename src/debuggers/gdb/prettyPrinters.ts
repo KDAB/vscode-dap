@@ -8,8 +8,18 @@ import * as vscode from "vscode";
 
 import { isFile } from "../../paths";
 
-const GDB_QT_PRINTERS_BASE_URL =
-  "https://raw.githubusercontent.com/iamsergio/kdevelop/vscode-gdb-dap/plugins/gdb/printers";
+/**
+ * The commit the printers are fetched from, rather than the branch they sit
+ * on. What is downloaded here is Python that gdb goes on to execute, so the
+ * URL should name one immutable revision: a branch ref would let the contents
+ * of an already-released extension change underneath it. Bump this
+ * deliberately to pick up printer fixes.
+ *
+ * Currently the head of iamsergio/kdevelop's vscode-gdb-dap branch.
+ */
+const GDB_QT_PRINTERS_COMMIT = "7acdd65fe9cb12ce1785705f9826ee7f0560e66e";
+
+const GDB_QT_PRINTERS_BASE_URL = `https://raw.githubusercontent.com/iamsergio/kdevelop/${GDB_QT_PRINTERS_COMMIT}/plugins/gdb/printers`;
 
 const DOWNLOAD_TIMEOUT_MS = 10_000;
 
