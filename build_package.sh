@@ -10,6 +10,11 @@ cd "$SCRIPT_DIR"
 
 rm -rf *vsix &> /dev/null
 
+# tsc leaves behind the output of sources that have since been renamed or
+# deleted, and vsce packages whatever is in out/, so a locally built .vsix
+# would ship dead code that a CI build - a fresh checkout - never sees.
+rm -rf out &> /dev/null
+
 echo "npm install..."
 npm install
 
