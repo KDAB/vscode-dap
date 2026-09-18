@@ -27,7 +27,6 @@ jobs:
             runner: ubuntu-26.04
             # Every suite.
             suites: ""
-            qt-archives: qtbase icu
           - name: macos
             runner: macos-15
             # There is no usable gdb on macOS - unsigned, so it cannot debug
@@ -51,7 +50,21 @@ jobs:
 
       # Not the distro's qt6-base-dev: expected.txt is golden output, so Qt is pinned to an
       # exact version and changes when someone changes it, not when the distro updates.
-      - name: Install Qt
+      - name: Install Qt (Linux)
+        if: runner.os == 'Linux'
+        uses: KDABLabs/sanitized-qt-action@v1
+        with:
+          qt-tag: "v6.12.0-beta4"
+          qt-flavor: "debug"
+
+      - name: Setup Python for the bindings
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Qt (macOS)
+        if: runner.os == 'macOS'
         uses: jurplel/install-qt-action@v4
         with:
           version: 6.10.2
