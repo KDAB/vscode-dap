@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2](https://github.com/KDAB/vscode-dap/compare/v1.3.1...v1.3.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* get Qt from sanitized-qt-action on Linux in test-printers CI ([1aa6550](https://github.com/KDAB/vscode-dap/commit/1aa655075fd7a73c952d81f6e11a371c592db8e4))
+* stop install-qt-action from installing its own Python in CI ([c741d3f](https://github.com/KDAB/vscode-dap/commit/c741d3f3811ae2f0fc073b313d0ec97abcb2a058))
+
 ## [1.3.1](https://github.com/KDAB/vscode-dap/compare/v1.3.0...v1.3.1) (2026-09-04)
 
 
