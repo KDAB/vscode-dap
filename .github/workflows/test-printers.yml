@@ -18,17 +18,24 @@ jobs:
     name: test (${{ matrix.name }})
     runs-on: ${{ matrix.runner }}
     strategy:
-      # One platform's printers failing says nothing about the other's, and
-      # seeing both diffs at once beats rerunning to find the second.
+      # One platform's (or Qt version's) printers failing says nothing about
+      # the others', and seeing every diff at once beats rerunning to find the
+      # next one.
       fail-fast: false
       matrix:
         include:
-          - name: linux
+          - name: linux-qt6.12
             runner: ubuntu-26.04
             # Every suite.
             suites: ""
-          - name: macos
+            qt-tag: "v6.12.0-beta4"
+          - name: linux-qt6.11
+            runner: ubuntu-26.04
+            suites: ""
+            qt-tag: "v6.11.0"
+          - name: macos-qt6.10
             runner: macos-15
+            qt-version: 6.10.2
             # There is no usable gdb on macOS - unsigned, so it cannot debug
             # anything - so only the lldb printers are exercised here.
             suites: "--lldb"
@@ -54,7 +61,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: KDABLabs/sanitized-qt-action@v1
         with:
-          qt-tag: "v6.12.0-beta4"
+          qt-tag: ${{ matrix.qt-tag }}
           qt-flavor: "debug"
 
       - name: Setup Python for the bindings
@@ -67,7 +74,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.10.2
+          version: ${{ matrix.qt-version }}
           archives: ${{ matrix.qt-archives }}
           cache: true
 
@@ -94,8 +101,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          # Per platform: the artifact names have to differ, and a diff is only
-          # readable next to the platform it came from anyway.
+          # Per matrix entry: the artifact names have to differ, and a diff is
+          # only readable next to the platform and Qt it came from anyway.
           name: printer-output-${{ matrix.name }}
           path: printers/**/tests/*output.txt
           if-no-files-found: ignore
