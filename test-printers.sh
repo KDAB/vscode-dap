@@ -18,6 +18,10 @@ cd "$SCRIPT_DIR"
 #
 # With neither, every suite runs. Any other argument is passed on to the suites
 # themselves, e.g. --keep.
+#
+# Env:
+#   LLDB_DAP  an lldb-dap from LLDB 23+, for the lldb QML frames suite, which
+#             is skipped without one
 
 RUN_LLDB=0
 RUN_GDB=0
@@ -39,11 +43,19 @@ fi
 if [ "$RUN_LLDB" = "1" ]; then
     echo "printers/lldb/qt..."
     ./printers/lldb/qt/tests/test.sh "${FORWARD[@]}"
+    # Needs an lldb-dap from LLDB 23+, which few systems have as their lldb-dap
+    # yet, so it runs when one is named rather than failing on the rest.
+    if [ -n "$LLDB_DAP" ]; then
+        echo "printers/tests/qml_frames (lldb)..."
+        ./printers/tests/qml_frames/test.sh lldb "${FORWARD[@]}"
+    else
+        echo "printers/tests/qml_frames (lldb): skipped, set LLDB_DAP to an lldb-dap from LLDB 23+"
+    fi
 fi
 
 if [ "$RUN_GDB" = "1" ]; then
     echo "printers/gdb..."
     ./printers/gdb/tests/test.sh "${FORWARD[@]}"
-    echo "printers/gdb QML frames..."
-    ./printers/gdb/tests/qml_frames/test.sh "${FORWARD[@]}"
+    echo "printers/tests/qml_frames (gdb)..."
+    ./printers/tests/qml_frames/test.sh gdb "${FORWARD[@]}"
 fi

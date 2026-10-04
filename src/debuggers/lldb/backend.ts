@@ -18,6 +18,13 @@ function qtPrettyPrintersDir(context: vscode.ExtensionContext): string {
   return context.asAbsolutePath(path.join("printers", "lldb", "qt"));
 }
 
+/** Absolute path to the QML frame provider bundled with this extension. */
+function qmlFramesScript(context: vscode.ExtensionContext): string {
+  return context.asAbsolutePath(
+    path.join("printers", "lldb", "kdap_qml_frames.py"),
+  );
+}
+
 /**
  * Drives lldb-dap, LLDB's own DAP adapter binary.
  *
@@ -69,7 +76,15 @@ export class LldbBackend implements DebuggerBackend {
     const qtPrettyPrintersCommand = options.qtPrettyPrinters
       ? `command script import ${JSON.stringify(qtPrettyPrintersDir(context.extensionContext))}`
       : undefined;
-    applyLldbConfiguration(config, options, qtPrettyPrintersCommand);
+    // Unconditional, like gdb's QML frame filter: it only touches QML
+    // interpreter frames, and registers nothing on an LLDB older than 23.
+    const qmlFramesCommand = `command script import ${JSON.stringify(qmlFramesScript(context.extensionContext))}`;
+    applyLldbConfiguration(
+      config,
+      options,
+      qtPrettyPrintersCommand,
+      qmlFramesCommand,
+    );
     return config;
   }
 }

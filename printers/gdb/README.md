@@ -59,8 +59,8 @@ every QML function in the interpreter.
 ## Testing
 
 ```
-tests/test.sh             # kdap_map_hint.py
-tests/qml_frames/test.sh  # kdap_qml_frames.py
+tests/test.sh                          # kdap_map_hint.py
+../tests/qml_frames/test.sh gdb        # kdap_qml_frames.py
 ```
 
 or from the repo root:
@@ -70,7 +70,7 @@ or from the repo root:
 ```
 
 `tests/test.sh` needs only gdb and g++ — no Qt, no printer download, no node, no VS Code. It debugs
-`tests/main.cpp` over real DAP with `tests/dap_probe.py` (a ~200-line DAP client, because the CLI
+`tests/main.cpp` over real DAP with `tests/dap_probe.py` (a DAP client built on `printers/tests/dap_client.py`, because the CLI
 renders map-hinted printers correctly with or without the fixup, so only a DAP client can tell
 whether it works) and diffs the reported variables against `tests/expected.txt`.
 
@@ -98,19 +98,7 @@ cd tests && ./build.sh
 python3 dap_probe.py gdb ./build/main "source $PWD/fixture_printer.py"
 ```
 
-### `tests/qml_frames`
+### `kdap_qml_frames.py`
 
-Needs gdb, cmake and a Qt 6 whose QtQml has debug info. It debugs `tests/qml_frames/main.cpp` over
-real DAP with `stack_probe.py` (which reuses `dap_probe.py`'s client), stopping in C++ that
-`main.qml` reaches twice over - `Component.onCompleted` → `outer()` → `inner()` →
-`Backend::compute()`, whose signal's QML handler calls `Backend::report()` - and diffs the frames
-from `main.cpp` and `main.qml` against `expected.txt`, followed by a count of the interpreter
-frames left, which should be none. Qt's own frames in between differ between Qt versions and
-builds, so they aren't listed. The probe launches the fixture with `QV4_FORCE_INTERPRETER=1`.
-
-To see what the filter fixes, run the probe without it:
-
-```
-cd tests/qml_frames && ./build.sh
-python3 stack_probe.py gdb ./build/main
-```
+Tested by `printers/tests/qml_frames`, which it shares with lldb's frame provider: see
+[`printers/tests/README.md`](../tests/README.md).

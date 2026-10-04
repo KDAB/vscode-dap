@@ -40,6 +40,7 @@ npm run compile              # Compile TypeScript to JavaScript
 ./test-printers.sh           # The standalone suites under printers/; needs g++, gdb, lldb and Qt
 ./test-printers.sh --lldb    # The lldb printer suite only
 ./test-printers.sh --gdb     # The gdb printer suite only
+LLDB_DAP=/path/to/lldb-dap ./test-printers.sh --lldb  # Includes the LLDB 23+ QML frames suite
 ```
 
 `./test.sh` wraps `npm test`, which is `npm run test:unit` (plain mocha) followed by
@@ -78,12 +79,13 @@ entry, nothing else.
   `configuration.ts` (`sourceMap`), `backend.ts` (the wiring, plus the `PATH`-then-`xcrun`
   lookup that finds the lldb-dap Xcode keeps outside `PATH`).
 - `printers/` — Python a backend loads into its debugger, bundled in the `.vsix`:
-  `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship) and `printers/gdb/`
+  `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship), `printers/gdb/`
   (`kdap_map_hint.py`, which makes gdb's DAP layer pair up the children of a `map`-hinted pretty
-  printer instead of showing `[0].key` / `[0].value` rows, and `kdap_qml_frames.py`, a frame
-  filter that shows QML functions in place of the QML interpreter's frames). Each has a
-  standalone test suite under `tests/`, run by `./test-printers.sh` (`--lldb` / `--gdb` narrow it
-  to one).
+  printer instead of showing `[0].key` / `[0].value` rows), and a `kdap_qml_frames.py` per
+  debugger that shows QML functions in place of the QML interpreter's frames (a frame filter for
+  gdb, a scripted frame provider for lldb, LLDB 23+). Each has a standalone test suite under
+  `tests/`, and `printers/tests/` holds the suites shared by both debuggers; all run by
+  `./test-printers.sh` (`--lldb` / `--gdb` narrow it to one).
 
 `arguments.ts`, `configuration.ts`, `version.ts`, `sessionOptions.ts` and `paths.ts` take no
 vscode dependency, which is where the logic lives and where the unit tests reach it; the
@@ -119,7 +121,9 @@ vscode dependency, which is where the logic lives and where the unit tests reach
   `.github/workflows/build-lldb-macos.yml` runs the same `--lldb` suite on macOS, where nothing
   needs installing (Xcode provides lldb-dap and the compilers) and there is no `xvfb-run`.
   `.github/workflows/test-printers.yml` runs the standalone printer suites on both Linux (both
-  suites) and macOS (`--lldb` only, since gdb isn't a supported debugger there).
+  suites, plus the lldb QML frames suite against LLDB 23 from apt.llvm.org, installed last
+  since it replaces the distro's lldb) and macOS (`--lldb` only, since gdb isn't a supported
+  debugger there, and without the QML frames suite, Xcode's lldb predating frame providers).
 
 ## Conventions
 
