@@ -97,6 +97,26 @@ jobs:
       - name: test
         run: ./test-printers.sh ${{ matrix.suites }}
 
+      # The lldb QML frames suite needs LLDB 23+ for its frame providers, newer
+      # than the distro's lldb, so it comes from apt.llvm.org. Only once the
+      # suites above are done with the distro's: apt removes lldb, lldb-21 and
+      # python3-lldb-21 to make room for it, the python3-lldb packages of two
+      # versions being unable to coexist.
+      - name: Install LLDB 23
+        if: runner.os == 'Linux'
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-23 main" | sudo tee /etc/apt/sources.list.d/llvm-23.list
+          sudo apt-get update
+          sudo apt-get install -y lldb-23
+          /usr/lib/llvm-23/bin/lldb --version
+
+      - name: test QML frames (LLDB 23)
+        if: runner.os == 'Linux'
+        env:
+          LLDB_DAP: /usr/lib/llvm-23/bin/lldb-dap
+        run: ./printers/tests/qml_frames/test.sh lldb
+
       - name: Upload printer output on failure
         if: failure()
         uses: actions/upload-artifact@v7
@@ -107,4 +127,5 @@ jobs:
           path: |
             printers/**/tests/*output.txt
             printers/**/tests/*/output.txt
+            printers/tests/*/output-*.txt
           if-no-files-found: ignore

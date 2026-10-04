@@ -15,14 +15,20 @@ import { SessionOptions } from "../../sessionOptions";
  * environment the inferior inherits rather than replacing it, so it needs no
  * equivalent of gdb's inf.clear_env() workaround.
  *
- * `qtPrettyPrintersCommand` is passed in rather than derived here because
- * building it needs a `vscode.ExtensionContext` to locate the bundled
- * printers, which this module deliberately has no dependency on.
+ * `qtPrettyPrintersCommand` and `qmlFramesCommand` are passed in rather than
+ * derived here because building them needs a `vscode.ExtensionContext` to
+ * locate the bundled Python, which this module deliberately has no dependency
+ * on.
+ *
+ * `qmlFramesCommand` imports the QML frame provider, which registers itself on
+ * the target - so it goes in `preRunCommands`, the first point at which
+ * lldb-dap has one, whether launching or attaching.
  */
 export function applyLldbConfiguration(
   config: Record<string, unknown>,
   options: SessionOptions,
   qtPrettyPrintersCommand?: string,
+  qmlFramesCommand?: string,
 ): void {
   // lldb-dap's "sourceMap" takes [from, to] pairs, and populates
   // target.source-map from them.
@@ -32,9 +38,20 @@ export function applyLldbConfiguration(
   }
 
   if (qtPrettyPrintersCommand) {
-    const initCommands = Array.isArray(config["initCommands"])
-      ? (config["initCommands"] as unknown[])
-      : [];
-    config["initCommands"] = [...initCommands, qtPrettyPrintersCommand];
+    appendCommand(config, "initCommands", qtPrettyPrintersCommand);
   }
+
+  if (qmlFramesCommand) {
+    appendCommand(config, "preRunCommands", qmlFramesCommand);
+  }
+}
+
+/** Appends `command` to the `key` command list, after the caller's own. */
+function appendCommand(
+  config: Record<string, unknown>,
+  key: string,
+  command: string,
+): void {
+  const commands = Array.isArray(config[key]) ? (config[key] as unknown[]) : [];
+  config[key] = [...commands, command];
 }

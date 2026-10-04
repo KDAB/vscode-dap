@@ -7,3 +7,5 @@ outer main.qml:12
 expression for onCompleted main.qml:23
 main main.cpp:53
 interpreter frames: 0
+inner has variable frame: True
+inner evaluates 1+1: 2

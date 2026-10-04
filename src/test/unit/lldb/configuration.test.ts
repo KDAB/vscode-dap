@@ -20,11 +20,13 @@ function apply(
   config: Record<string, unknown>,
   options: Partial<SessionOptions> = {},
   qtPrettyPrintersCommand?: string,
+  qmlFramesCommand?: string,
 ) {
   applyLldbConfiguration(
     config,
     { ...noOptions, ...options },
     qtPrettyPrintersCommand,
+    qmlFramesCommand,
   );
   return config;
 }
@@ -93,6 +95,38 @@ suite("applyLldbConfiguration", () => {
         initCommands: [
           "platform select remote-linux",
           "command script import /qt",
+        ],
+      },
+    );
+  });
+
+  test("a qmlFramesCommand is added to preRunCommands", () => {
+    // Not initCommands: the frame provider registers itself on the target,
+    // which doesn't exist yet when those run.
+    assert.deepStrictEqual(
+      apply({ program: "/bin/ls" }, {}, undefined, "command script import /q"),
+      {
+        program: "/bin/ls",
+        preRunCommands: ["command script import /q"],
+      },
+    );
+  });
+
+  test("a qmlFramesCommand is appended after the caller's own preRunCommands", () => {
+    assert.deepStrictEqual(
+      apply(
+        {
+          preRunCommands: ["settings set target.x86-disassembly-flavor intel"],
+        },
+        {},
+        "command script import /qt",
+        "command script import /q",
+      ),
+      {
+        initCommands: ["command script import /qt"],
+        preRunCommands: [
+          "settings set target.x86-disassembly-flavor intel",
+          "command script import /q",
         ],
       },
     );
