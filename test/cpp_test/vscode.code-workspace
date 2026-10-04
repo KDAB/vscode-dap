@@ -52,6 +52,33 @@
         "cwd": "${workspaceFolder}"
       },
       {
+        "name": "Launch test_qtquick (GDB)",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${workspaceFolder}/build-dev/test_qtquick",
+        "cwd": "${workspaceFolder}",
+        "qtPrettyPrinters": true
+      },
+      {
+        "name": "Launch test_qtquick (GDB, QML interpreter only)",
+        "type": "kdap",
+        "request": "launch",
+        "program": "${workspaceFolder}/build-dev/test_qtquick",
+        "cwd": "${workspaceFolder}",
+        "qtPrettyPrinters": true,
+        "env": {
+          "QV4_FORCE_INTERPRETER": "1"
+        }
+      },
+      {
+        "name": "Launch test_qtquick (LLDB)",
+        "type": "kdap-lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/build-dev/test_qtquick",
+        "cwd": "${workspaceFolder}",
+        "qtPrettyPrinters": true
+      },
+      {
         "name": "Attach to test_attach (by PID)",
         "type": "kdap",
         "request": "attach",

@@ -17,3 +17,12 @@ add_executable(test_env test_env.cpp)
 add_executable(test_attach test_attach.cpp)
 target_link_libraries(test_attach Threads::Threads)
 add_executable(test_crash test_crash.cpp)
+
+find_package(Qt6 COMPONENTS Quick QUIET)
+if(Qt6_FOUND)
+  set(CMAKE_AUTOMOC ON)
+  add_executable(test_qtquick test_qtquick.cpp)
+  target_compile_definitions(test_qtquick PRIVATE
+    TEST_QTQUICK_QML="${CMAKE_CURRENT_SOURCE_DIR}/test_qtquick.qml")
+  target_link_libraries(test_qtquick Qt6::Quick)
+endif()
