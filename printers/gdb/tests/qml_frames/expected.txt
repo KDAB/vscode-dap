@@ -1,0 +1,9 @@
+stopHere main.cpp:18
+Backend::report main.cpp:34
+onComputed main.qml:19
+Backend::compute main.cpp:28
+inner main.qml:8
+outer main.qml:12
+expression for onCompleted main.qml:23
+main main.cpp:53
+interpreter frames: 0

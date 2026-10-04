@@ -10,7 +10,8 @@ cd "$SCRIPT_DIR"
 
 # Runs the standalone test suites under printers/. These are independent of the
 # extension: no node, no VS Code, just a debugger, g++ and (for the lldb Qt
-# printers) Qt. Further suites get appended here as they're added.
+# printers and the gdb QML frame filter) Qt. Further suites get appended here
+# as they're added.
 #
 #   --lldb    the lldb suites only
 #   --gdb     the gdb suites only
@@ -43,4 +44,6 @@ fi
 if [ "$RUN_GDB" = "1" ]; then
     echo "printers/gdb..."
     ./printers/gdb/tests/test.sh "${FORWARD[@]}"
+    echo "printers/gdb QML frames..."
+    ./printers/gdb/tests/qml_frames/test.sh "${FORWARD[@]}"
 fi
