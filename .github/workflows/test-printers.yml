@@ -104,5 +104,7 @@ jobs:
           # Per matrix entry: the artifact names have to differ, and a diff is
           # only readable next to the platform and Qt it came from anyway.
           name: printer-output-${{ matrix.name }}
-          path: printers/**/tests/*output.txt
+          path: |
+            printers/**/tests/*output.txt
+            printers/**/tests/*/output.txt
           if-no-files-found: ignore

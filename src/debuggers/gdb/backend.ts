@@ -12,7 +12,7 @@ import {
   BackendError,
   DebuggerBackend,
 } from "../backend";
-import { buildGdbArgs, buildMapHintArgs } from "./arguments";
+import { buildBundledScriptArgs, buildGdbArgs } from "./arguments";
 import { getQtPrettyPrintersArgs } from "./prettyPrinters";
 import {
   getGdbVersion,
@@ -83,11 +83,12 @@ export class GdbBackend implements DebuggerBackend {
       ? await getQtPrettyPrintersArgs(context.extensionContext)
       : [];
 
-    // Unconditional, and independent of the Qt printers: the fixup repairs any
-    // map-hinted printer, libstdc++'s std::map included, and does nothing at
-    // all if this gdb turns out not to need it.
+    // Unconditional, and independent of the Qt printers: the map hint fixup
+    // repairs any map-hinted printer, libstdc++'s std::map included, and the
+    // QML frame filter only touches QML interpreter frames. Each does nothing
+    // at all where there is nothing to fix.
     const pythonArgs = [
-      ...buildMapHintArgs(gdbScriptsDir(context.extensionContext)),
+      ...buildBundledScriptArgs(gdbScriptsDir(context.extensionContext)),
       ...prettyPrinterArgs,
     ];
 

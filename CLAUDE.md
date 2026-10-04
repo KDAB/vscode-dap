@@ -80,8 +80,10 @@ entry, nothing else.
 - `printers/` — Python a backend loads into its debugger, bundled in the `.vsix`:
   `printers/lldb/qt/` (Qt pretty printers, which lldb doesn't ship) and `printers/gdb/`
   (`kdap_map_hint.py`, which makes gdb's DAP layer pair up the children of a `map`-hinted pretty
-  printer instead of showing `[0].key` / `[0].value` rows). Each has a standalone test suite
-  under `tests/`, run by `./test-printers.sh` (`--lldb` / `--gdb` narrow it to one).
+  printer instead of showing `[0].key` / `[0].value` rows, and `kdap_qml_frames.py`, a frame
+  filter that shows QML functions in place of the QML interpreter's frames). Each has a
+  standalone test suite under `tests/`, run by `./test-printers.sh` (`--lldb` / `--gdb` narrow it
+  to one).
 
 `arguments.ts`, `configuration.ts`, `version.ts`, `sessionOptions.ts` and `paths.ts` take no
 vscode dependency, which is where the logic lives and where the unit tests reach it; the

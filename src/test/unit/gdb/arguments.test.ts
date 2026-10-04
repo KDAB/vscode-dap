@@ -5,7 +5,7 @@ import * as assert from "assert";
 
 import {
   buildGdbArgs,
-  buildMapHintArgs,
+  buildBundledScriptArgs,
 } from "../../../debuggers/gdb/arguments";
 import { SessionOptions } from "../../../sessionOptions";
 
@@ -145,20 +145,24 @@ suite("buildGdbArgs", () => {
   });
 });
 
-suite("buildMapHintArgs", () => {
-  test("imports the fixup from the given directory and installs it", () => {
-    assert.deepStrictEqual(buildMapHintArgs("/ext/printers/gdb"), [
+suite("buildBundledScriptArgs", () => {
+  test("imports each bundled module from the given directory and installs it", () => {
+    assert.deepStrictEqual(buildBundledScriptArgs("/ext/printers/gdb"), [
       "-iex",
       'python import sys; sys.path.insert(0, "/ext/printers/gdb"); import kdap_map_hint; kdap_map_hint.install()',
+      "-iex",
+      'python import sys; sys.path.insert(0, "/ext/printers/gdb"); import kdap_qml_frames; kdap_qml_frames.install()',
     ]);
   });
 
   test("quotes a directory containing spaces or quotes", () => {
     // The path lands inside a Python expression, so it has to be a Python
     // literal rather than pasted in raw.
-    assert.deepStrictEqual(buildMapHintArgs('/ext dir/with"quote'), [
+    assert.deepStrictEqual(buildBundledScriptArgs('/ext dir/with"quote'), [
       "-iex",
       'python import sys; sys.path.insert(0, "/ext dir/with\\"quote"); import kdap_map_hint; kdap_map_hint.install()',
+      "-iex",
+      'python import sys; sys.path.insert(0, "/ext dir/with\\"quote"); import kdap_qml_frames; kdap_qml_frames.install()',
     ]);
   });
 });
