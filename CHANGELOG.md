@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/KDAB/vscode-dap/compare/v1.3.1...v1.4.0) (2026-10-10)
+
+
+### Features
+
+* show QML functions on gdb call stacks ([ce53111](https://github.com/KDAB/vscode-dap/commit/ce531119e37a556c86983d69634aabdab7e00611))
+* show QML functions on lldb call stacks ([7d6c970](https://github.com/KDAB/vscode-dap/commit/7d6c97074aa3ed316bba4cff8814bc5305592b18))
+
+
+### Bug Fixes
+
+* get Qt from sanitized-qt-action on Linux in test-printers CI ([1aa6550](https://github.com/KDAB/vscode-dap/commit/1aa655075fd7a73c952d81f6e11a371c592db8e4))
+* stop install-qt-action from installing its own Python in CI ([c741d3f](https://github.com/KDAB/vscode-dap/commit/c741d3f3811ae2f0fc073b313d0ec97abcb2a058))
+
 ## [1.3.1](https://github.com/KDAB/vscode-dap/compare/v1.3.0...v1.3.1) (2026-09-04)
 
 
